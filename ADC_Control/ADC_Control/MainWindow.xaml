@@ -1,0 +1,133 @@
+﻿<Window x:Class="ADC_Control.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ADC_Control"
+        xmlns:plot="clr-namespace:InteractiveDataDisplay.WPF;assembly=Plots"
+        xmlns:res="clr-namespace:ADC_Control.Properties"
+        xmlns:sys="clr-namespace:System;assembly=System"
+        xmlns:tools="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit.NET5"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Window.Resources>
+        <local:ViewModel x:Key="vm"/>
+        <local:BoolToBrushConverter x:Key="boolToBrush"/>
+        <local:ADCPropertyModeIsReadOnlyConverter x:Key="porpModeIsRead"/>
+    </Window.Resources>
+    <Window.DataContext>
+        <StaticResource ResourceKey="vm"/>
+    </Window.DataContext>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Menu Grid.Row="0">
+
+        </Menu>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition Height="auto"/>
+                </Grid.RowDefinitions>
+                <DataGrid Grid.ColumnSpan="2" ItemsSource="{Binding ADCProperties}" AutoGenerateColumns="False" HorizontalScrollBarVisibility="Auto">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="{x:Static res:Resources.ADCPropertyColumnName}" Binding="{Binding Property}"/>
+                        <DataGridComboBoxColumn Header="{x:Static res:Resources.ADCValueColumnName}" IsReadOnly="{Binding Path=Mode, Converter={StaticResource porpModeIsRead}}" SelectedValueBinding="{Binding SelectValue}">
+                            <DataGridComboBoxColumn.EditingElementStyle>
+                                <Style TargetType="{x:Type ComboBox}">
+                                    <Setter Property="ItemsSource" Value="{Binding Values}"/>
+                                </Style>
+                            </DataGridComboBoxColumn.EditingElementStyle>
+                            <DataGridComboBoxColumn.ElementStyle>
+                                <Style TargetType="{x:Type ComboBox}">
+                                    <Setter Property="ItemsSource" Value="{Binding Values}"/>
+                                </Style>
+                            </DataGridComboBoxColumn.ElementStyle>
+                        </DataGridComboBoxColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <Button Grid.Row="1" Content="{x:Static res:Resources.UpdateADCProperties}" Command="{Binding UpdateADCPropertiesCommand}"/>
+                <Button Grid.Row="1" Grid.Column="1" Content="{x:Static res:Resources.WriteADCProperties}" Command="{Binding WriteADCPropertiesCommand}"/>
+            </Grid>
+
+
+            <GridSplitter Grid.Column="1"/>
+            <plot:Chart Grid.Column="2" Content="{Binding SelectGraph}">
+
+            </plot:Chart>
+            <GridSplitter Grid.Column="3"/>
+            <ScrollViewer Grid.Column="4">
+                <StackPanel>
+                    <Grid Height="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="20"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox SelectedItem="{Binding SelectPort}" ItemsSource="{Binding Ports}"/>
+                        <Button Grid.Column="1" Content="{x:Static res:Resources.UpdatePortsButtonContent}" Command="{Binding UpdatePortsCommand}"/>
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <Label Content="{x:Static res:Resources.PortBaundRateLabel}"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding SettingPortVM.BaundRateValues}" SelectedItem="{Binding SettingPortVM.BaundRate, Mode=TwoWay}"/>
+                        <Label Grid.Row="1" Content="{x:Static res:Resources.PortDataBits}"/>
+                        <ComboBox Grid.Row="1"  Grid.Column="1" ItemsSource="{Binding SettingPortVM.DataBitsValues}" SelectedItem="{Binding SettingPortVM.DataBits, Mode=TwoWay}"/>
+                        <Label Grid.Row="2" Content="{x:Static res:Resources.PortParity}"/>
+                        <ComboBox Grid.Row="2"  Grid.Column="1" ItemsSource="{Binding SettingPortVM.ParityValues}" SelectedItem="{Binding SettingPortVM.Parity, Mode=TwoWay}"/>
+                        <Label Grid.Row="3" Content="{x:Static res:Resources.PortStopBitsLabel}"/>
+                        <ComboBox Grid.Row="3"  Grid.Column="1" ItemsSource="{Binding SettingPortVM.StopBitsValues}" SelectedItem="{Binding SettingPortVM.StopBits, Mode=TwoWay}"/>
+                    </Grid>
+                    <Button Content="{x:Static res:Resources.OpenPortButtonContent}" Command="{Binding OpenPortCommand}"/>
+                    <Button Content="{x:Static res:Resources.ChangePortButtonContent}" Command="{Binding UpdatePortParametersCommand}"/>
+                    <Button Content="{x:Static res:Resources.ClosePortButtonContent}" Command="{Binding ClosePortCommand}"/>
+                    
+                    <Line X1="0" Y1="0" X2="1" Y2="0" Stretch="Fill" Style="{DynamicResource delimiterLineStyle}"/>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Content="{x:Static res:Resources.TestMirrorCommandButtonContent}" Command="{Binding TestMirrorCommand}"/>
+                        <Rectangle Grid.Column="1" Style="{DynamicResource ConditionStyle}" Fill="{Binding IsMirrorTest, Converter={StaticResource boolToBrush}}"/>
+                    </Grid>
+                    <Button Content="{x:Static res:Resources.CancelADCOperationButtonContent}" Command="{Binding CancelADCOperationCommand}"/>
+                    <Button Content="{x:Static res:Resources.CalibrationADCInsideButtonContent}" Command="{Binding CalibrationADCInsideCommand}"/>
+                    <Button Content="{x:Static res:Resources.CalibrationADCOutsideButtonContent}" Command="{Binding CalibrationADCOutsideCommand}"/>
+                    <Button Content="{x:Static res:Resources.CalibrationADCScaleButtonContent}" Command="{Binding CalibrationADCScaleCommand}"/>
+                    <Button Content="{x:Static res:Resources.ConvertADCButtonContent}" Command="{Binding ConvertADCCommand}"/>
+                    <tools:TimePicker Value="{Binding TimeConvertation, Mode=TwoWay}"/>
+                    <Button Content="{x:Static res:Resources.ConvertToTimeADCButtonContent}" Command="{Binding ConvertADCToTimeCommand}"/>
+
+                    <Line X1="0" Y1="0" X2="1" Y2="0" Stretch="Fill" Style="{DynamicResource delimiterLineStyle}"/>
+
+                    <Label Content="{x:Static res:Resources.GraphsLabelContent}"/>
+                    <ListBox ItemsSource="{Binding Graphs}" SelectedItem="{Binding SelectGraph}"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>

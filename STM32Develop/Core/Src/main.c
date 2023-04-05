@@ -136,6 +136,8 @@ void ADC_Self_Offset_Calibration();
 void ADC_System_Offset_Calibration();
 void ADC_System_Gain_Calibration_5V();
 void ADC_SET_Input_Mux(uint8_t inputN, uint8_t inputP);
+void ADC_SEND_Two_Block_Command(uint16_t command);
+uint8_t ADC_Read_Byte();
 
 int8_t ADC_GET_Chop_Mode();
 void ADC_SET_Chop_Mode(int8_t value);
@@ -196,13 +198,6 @@ void ADC_SET_DIR(int8_t value);
 int8_t ADC_GET_DAT();
 void ADC_SET_DAT(int8_t value);
 void Convert_Input_Data(uint8_t* data);
-void FILL_Func_Dates();
-
-struct FuncData{
-	int8_t func_number;
-	void (*SET)(int8_t);
-	int8_t (*GET)();
-};
 
 /* USER CODE END PFP */
 
@@ -242,7 +237,6 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-	FILL_Func_Dates();
 	HAL_UART_Receive_IT(&huart1, rx_buffer, 4);
   HAL_UART_Transmit_IT(&huart1, rx_buffer, 4);
   /* USER CODE END 2 */
@@ -252,8 +246,13 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+		HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_RESET);
+		ADC_SEND_Two_Block_Command(0x2500);
+		uint8_t byte = ADC_Read_Byte();
 
-
+				HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET);
+		HAL_UART_Transmit_IT(&huart1, &byte, 1);
+		HAL_Delay(5000);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -434,10 +433,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_5|GPIO_PIN_6, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_5, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4|GPIO_PIN_6, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5, GPIO_PIN_RESET);
@@ -521,9 +520,9 @@ void ADC_Send_Command(int8_t command){
 //Send command by two byte to ADC 
 //!Use command:
 //!CS-LOW; Send command and CS Hight
-void ADC_SEND_Two_Block_Command(int16_t command)
+void ADC_SEND_Two_Block_Command(uint16_t command)
 {
-	for(int i = 15; i>=0; i--){
+	for(int i = 0; i<16; i++){
 		if(command >> i & 0x01)
 			HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_DIN, GPIO_PIN_SET);
 		else
@@ -534,7 +533,7 @@ void ADC_SEND_Two_Block_Command(int16_t command)
 }
 
 //Read byte register ADC
-uint8_t ADC_Read_Byte()
+ uint8_t ADC_Read_Byte()
 {
 	uint8_t result = 0;
 	for(int i = 0; i<8; i++)
@@ -597,19 +596,16 @@ uint32_t ADC_READ_Data1()
 }
 
 //adress  - 4 bit; size - 4 bit
-void ADC_READ_Ceil_Memory(uint8_t adress, uint8_t* buffer, uint8_t size)
+uint8_t ADC_READ_Ceil_Memory(uint8_t adress)
 {
 	int16_t command = ADC_MASK_READ_REGISTERS_COMMAND + adress;
 	command = command<<8;
-	size = size - 1;
-	command = command | size;
+	command = command | 7;
 	HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_RESET);
 	ADC_SEND_Two_Block_Command(command);
-	for(int i = 0; i<=size; i++)
-	{
-		buffer[i] = ADC_Read_Byte();
-	}
+	uint8_t res = ADC_Read_Byte();
 	HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET);
+	return res;
 }
 
 void ADC_WRITE_Ceil_Memory(uint8_t adress, uint8_t value)
@@ -625,21 +621,19 @@ void ADC_WRITE_Ceil_Memory(uint8_t adress, uint8_t value)
 
 void ADC_APPEND_Byte_To_Register(uint8_t adress, uint8_t mask, uint8_t value)
 {
-	uint8_t *old_data;
-	ADC_READ_Ceil_Memory(adress, old_data, 1);
+	uint8_t old_data = ADC_READ_Ceil_Memory(adress);
 	value = value & mask;
 	mask = ~mask;
-	*old_data = (*old_data & mask) | value;
-	ADC_WRITE_Ceil_Memory(adress, *old_data);
+	old_data = (old_data & mask) | value;
+	ADC_WRITE_Ceil_Memory(adress, old_data);
 }
 
 int8_t ADC_READ_Bytes_By_Mask_From_Register(uint8_t adress, uint8_t offset, uint8_t maskSize)
 {
-	uint8_t *res;
-	ADC_READ_Ceil_Memory(adress, res, 1);
-	*res = *res >> offset;
-	*res = *res & maskSize;
-	return *res;
+	uint8_t res = ADC_READ_Ceil_Memory(adress);
+	res = res >> offset;
+	res = res & maskSize;
+	return res;
 }
 
 void ADC_Convert(int16_t time)
@@ -658,16 +652,16 @@ void ADC_Convert(int16_t time)
 		{
 			HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_RESET);
 			uint8_t status = ADC_Read_Byte();
-			uint8_t *dates[4];
-			*dates[0] = ADC_Read_Byte();
-			*dates[1] = ADC_Read_Byte();
-			*dates[2] = ADC_Read_Byte();
-			*dates[3] = ADC_Read_Byte();
+			uint8_t dates[4];
+			dates[0] = ADC_Read_Byte();
+			dates[1] = ADC_Read_Byte();
+			dates[2] = ADC_Read_Byte();
+			dates[3] = ADC_Read_Byte();
 			int8_t optional = ADC_Read_Byte();
 			if(CanTranspData)
 			{
 				CanTranspData = 0;
-				HAL_UART_Transmit_IT(&huart1, dates[0], 4);
+				HAL_UART_Transmit_IT(&huart1, &dates[0], 4);
 				//GG
 			}
 			HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET);
@@ -710,13 +704,13 @@ void ADC_One_Measure_Convert()
 		{
 			HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_RESET);
 			uint8_t status = ADC_Read_Byte();
-			uint8_t *dates[4];
-			*dates[0] = ADC_Read_Byte();
-			*dates[1] = ADC_Read_Byte();
-			*dates[2] = ADC_Read_Byte();
-			*dates[3] = ADC_Read_Byte();
+			uint8_t dates[4];
+			dates[0] = ADC_Read_Byte();
+			dates[1] = ADC_Read_Byte();
+			dates[2] = ADC_Read_Byte();
+			dates[3] = ADC_Read_Byte();
 			int8_t optional = ADC_Read_Byte();
-			HAL_UART_Transmit(&huart1, dates[0], 4, 0xFFFF);
+			HAL_UART_Transmit(&huart1, &dates[0], 4, 0xFFFF);
 			HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET);
 			break;
 		}
@@ -725,12 +719,12 @@ void ADC_One_Measure_Convert()
 
 void ADC_Self_Offset_Calibration()
 {
-	uint8_t *old_impmux;
-	ADC_READ_Ceil_Memory(ADC_REGISTER_INPMUX, old_impmux, 1);
-	uint8_t *old_mode0;
-	ADC_READ_Ceil_Memory(ADC_REGISTER_MODE0, old_mode0, 1);
+	uint8_t old_impmux;
+	ADC_READ_Ceil_Memory(ADC_REGISTER_INPMUX);
+	uint8_t old_mode0;
+	ADC_READ_Ceil_Memory(ADC_REGISTER_MODE0);
 	
-	uint8_t temp = *old_mode0 & 0x11001111;
+	uint8_t temp = old_mode0 & 0x11001111;
 	ADC_WRITE_Ceil_Memory(ADC_REGISTER_INPMUX, 0xFF);
 	ADC_WRITE_Ceil_Memory(ADC_REGISTER_MODE0, temp);
 	
@@ -738,8 +732,8 @@ void ADC_Self_Offset_Calibration()
 	ADC_Send_Command(ADC_SELF_OFFSET_CALLIBRATION1_COMMAND);
 	HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET);
 	
-	ADC_WRITE_Ceil_Memory(ADC_REGISTER_INPMUX, *old_impmux);
-	ADC_WRITE_Ceil_Memory(ADC_REGISTER_MODE0, *old_mode0);
+	ADC_WRITE_Ceil_Memory(ADC_REGISTER_INPMUX, old_impmux);
+	ADC_WRITE_Ceil_Memory(ADC_REGISTER_MODE0, old_mode0);
 }
 
 void ADC_System_Offset_Calibration()
@@ -758,15 +752,15 @@ void ADC_SET_Input_Mux(uint8_t inputN, uint8_t inputP)
 
 void ADC_System_Gain_Calibration_5V()
 {
-	uint8_t *old_impmux;
-	ADC_READ_Ceil_Memory(ADC_REGISTER_INPMUX, old_impmux, 1);
+	uint8_t old_impmux;
+	ADC_READ_Ceil_Memory(ADC_REGISTER_INPMUX);
 	
 	ADC_SET_Input_Mux(0x0A, ADC_INPMUX_Analog_Monitor);
 	HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_RESET);
 	ADC_Send_Command(ADC_SYSTEM_GAIN_CALIBRATION1_COMMAND);
 	HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET);
 	
-	ADC_WRITE_Ceil_Memory(ADC_REGISTER_INPMUX, *old_impmux);
+	ADC_WRITE_Ceil_Memory(ADC_REGISTER_INPMUX, old_impmux);
 }
 
 
@@ -1049,71 +1043,137 @@ void ADC_SET_DAT(int8_t value)
 }
 
 
-struct FuncData dates[30];
-void FILL_Func_Dates()
+int8_t GetADCPropertySwitch(uint8_t index)
 {
-	dates[0].GET = ADC_GET_Chop_Mode;
-	dates[0].SET = ADC_SET_Chop_Mode;
-	dates[1].GET = ADC_GET_Delay;
-	dates[1].SET = ADC_SET_Delay;
-	dates[2].GET = ADC_GET_REFREV;
-	dates[2].SET = ADC_SET_REFREV;
-	dates[3].GET = ADC_READ_DEVID;
-	dates[4].GET = ADC_READ_REVID;
-	dates[5].GET = ADC_GET_VBIAS;
-	dates[5].SET = ADC_SET_VBIAS;
-	dates[6].GET = ADC_GET_INTREF;
-	dates[6].SET = ADC_SET_INTREF;
-	dates[7].GET = ADC_GET_Checksum_State;
-	dates[7].SET = ADC_SET_Checksum_State;
-	dates[8].GET = ADC_GET_Status;
-	dates[8].SET = ADC_SET_Status;
-	dates[9].GET = ADC_GET_TIMEOUT;
-	dates[9].SET = ADC_SET_TIMEOUT;
-	dates[10].GET = ADC_GET_SBMAG;
-	dates[10].SET = ADC_SET_SBMAG;
-	dates[11].GET = ADC_GET_SBPOL;
-	dates[11].SET = ADC_SET_SBPOL;
-	dates[12].GET = ADC_GET_SBADC;
-	dates[12].SET = ADC_SET_SBADC;
-	dates[13].GET = ADC_GET_FILTER;
-	dates[13].SET = ADC_SET_FILTER;
-	dates[14].GET = ADC_GET_DIR;
-	dates[14].SET = ADC_SET_DIR;
-	dates[15].GET = ADC_GET_GAIN;
-	dates[15].SET = ADC_SET_GAIN;
-	dates[16].GET = ADC_GET_BYPASS;
-	dates[16].SET = ADC_SET_BYPASS;
-	dates[17].GET = ADC_GET_IDACMUX1;
-	dates[17].SET = ADC_SET_IDACMUX1;
-	dates[18].GET = ADC_GET_IDACMUX2;
-	dates[18].SET = ADC_SET_IDACMUX2;
-	dates[19].GET = ADC_GET_IDACMAG1;
-	dates[19].SET = ADC_SET_IDACMAG1;
-	dates[20].GET = ADC_GET_IDACMAG2;
-	dates[20].SET = ADC_SET_IDACMAG2;
-	dates[21].GET = ADC_GET_RMUXN;
-	dates[21].SET = ADC_SET_RMUXN;
-	dates[22].GET = ADC_GET_RMUXP;
-	dates[22].SET = ADC_SET_RMUXP;
-	dates[23].GET = ADC_GET_OUTP;
-	dates[23].SET = ADC_SET_OUTP;
-	dates[24].GET = ADC_GET_MAGP;
-	dates[24].SET = ADC_SET_MAGP;
-	dates[25].GET = ADC_GET_OUTN;
-	dates[25].SET = ADC_SET_OUTN;
-	dates[26].GET = ADC_GET_MAGN;
-	dates[26].SET = ADC_SET_MAGN;
-	
-	dates[27].GET = ADC_GET_COM;
-	dates[27].SET = ADC_SET_COM;
-	
-	dates[28].GET = ADC_GET_DIR;
-	dates[28].SET = ADC_SET_DIR;
-	
-	dates[29].GET = ADC_GET_DAT;
-	dates[29].SET = ADC_SET_DAT;
+	switch(index)
+		{
+		case 0:
+			return ADC_GET_Chop_Mode();
+		case 1:
+			return ADC_GET_Delay();
+		case 2:
+			return ADC_GET_REFREV();
+		case 3:
+			return ADC_READ_DEVID();
+		case 4:
+			return ADC_READ_REVID();
+		case 5:
+			return ADC_GET_VBIAS();
+		case 6:
+			return ADC_GET_INTREF();
+		case 7:
+			return ADC_GET_Checksum_State();
+		case 8:
+			return ADC_GET_Status();
+		case 9:
+			return ADC_GET_TIMEOUT();
+		case 10:
+			return ADC_GET_SBMAG();
+		case 11:
+			return ADC_GET_SBPOL();
+		case 12:
+			return ADC_GET_SBADC();
+		case 13:
+			return ADC_GET_FILTER();
+		case 14:
+			return ADC_GET_DIR();
+		case 15:
+			return ADC_GET_GAIN();
+		case 16:
+			return ADC_GET_BYPASS();
+		case 17:
+			return ADC_GET_IDACMUX1();
+		case 18:
+			return ADC_GET_IDACMUX2();
+		case 19:
+			return ADC_GET_IDACMAG1();
+		case 20:
+			return ADC_GET_IDACMAG2();
+		case 21:
+			return ADC_GET_RMUXN();
+		case 22:
+			return ADC_GET_RMUXP();
+		case 23:
+			return ADC_GET_OUTP();
+		case 24:
+			return ADC_GET_MAGP();
+		case 25:
+			return ADC_GET_OUTN();
+		case 26:
+			return ADC_GET_MAGN();
+		case 27:
+			return ADC_GET_COM();
+		case 28:
+			return ADC_GET_DIR();
+		case 29:
+			return ADC_GET_DAT();
+		}
+		return 0;
 }
+
+void SetADCPropertySwitch(uint8_t index, int8_t value)
+{
+	switch(index)
+		{
+		case 0:
+			ADC_SET_Chop_Mode(value);
+		case 1:
+			ADC_SET_Delay(value);
+		case 2:
+			ADC_SET_REFREV(value);
+		case 5:
+			ADC_SET_VBIAS(value);
+		case 6:
+			ADC_SET_INTREF(value);
+		case 7:
+			ADC_SET_Checksum_State(value);
+		case 8:
+			ADC_SET_Status(value);
+		case 9:
+			ADC_SET_TIMEOUT(value);
+		case 10:
+			ADC_SET_SBMAG(value);
+		case 11:
+			ADC_SET_SBPOL(value);
+		case 12:
+			ADC_SET_SBADC(value);
+		case 13:
+			ADC_SET_FILTER(value);
+		case 14:
+			ADC_SET_DIR(value);
+		case 15:
+			ADC_SET_GAIN(value);
+		case 16:
+			ADC_SET_BYPASS(value);
+		case 17:
+			ADC_SET_IDACMUX1(value);
+		case 18:
+			ADC_SET_IDACMUX2(value);
+		case 19:
+			ADC_SET_IDACMAG1(value);
+		case 20:
+			ADC_SET_IDACMAG2(value);
+		case 21:
+			ADC_SET_RMUXN(value);
+		case 22:
+			ADC_SET_RMUXP(value);
+		case 23:
+			ADC_SET_OUTP(value);
+		case 24:
+			ADC_SET_MAGP(value);
+		case 25:
+			ADC_SET_OUTN(value);
+		case 26:
+			ADC_SET_MAGN(value);
+		case 27:
+			ADC_SET_COM(value);
+		case 28:
+			ADC_SET_DIR(value);
+		case 29:
+			ADC_SET_DAT(value);
+		}
+}
+
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
@@ -1177,7 +1237,7 @@ void Convert_Input_Data(uint8_t* data)
 		case 8:
 		{
 			for(int i=0; i<30; i++){
-				props_buffer[i] = dates[i].GET();
+				props_buffer[i] = GetADCPropertySwitch(i);
 			}
 			
 			HAL_UART_Transmit_IT(&huart1, props_buffer, 30);
@@ -1187,7 +1247,7 @@ void Convert_Input_Data(uint8_t* data)
 		{
 			if(data[3] < 30)
 			{
-				props_buffer[1] = dates[data[3]].GET();
+				props_buffer[1] = GetADCPropertySwitch(data[3]);
 				HAL_UART_Transmit_IT(&huart1, props_buffer, 1);
 			}
 			break;
@@ -1196,7 +1256,7 @@ void Convert_Input_Data(uint8_t* data)
 		{
 			if(data[3] < 30)
 			{
-				dates[data[2]].SET(data[3]);
+				SetADCPropertySwitch(data[2], data[3]);
 			}
 			break;
 		}

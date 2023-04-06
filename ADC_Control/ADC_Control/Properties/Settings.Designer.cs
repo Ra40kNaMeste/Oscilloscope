@@ -26,12 +26,12 @@ namespace ADC_Control.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("1")]
-        public int PortEndBits {
+        public int PortStopBits {
             get {
-                return ((int)(this["PortEndBits"]));
+                return ((int)(this["PortStopBits"]));
             }
             set {
-                this["PortEndBits"] = value;
+                this["PortStopBits"] = value;
             }
         }
         

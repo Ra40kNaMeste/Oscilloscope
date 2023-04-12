@@ -114,13 +114,15 @@
                         <Button Content="{x:Static res:Resources.TestMirrorCommandButtonContent}" Command="{Binding TestMirrorCommand}"/>
                         <Rectangle Grid.Column="1" Style="{DynamicResource ConditionStyle}" Fill="{Binding IsMirrorTest, Converter={StaticResource boolToBrush}}"/>
                     </Grid>
-                    <Button Content="{x:Static res:Resources.CancelADCOperationButtonContent}" Command="{Binding CancelADCOperationCommand}"/>
                     <Button Content="{x:Static res:Resources.CalibrationADCInsideButtonContent}" Command="{Binding CalibrationADCInsideCommand}"/>
                     <Button Content="{x:Static res:Resources.CalibrationADCOutsideButtonContent}" Command="{Binding CalibrationADCOutsideCommand}"/>
                     <Button Content="{x:Static res:Resources.CalibrationADCScaleButtonContent}" Command="{Binding CalibrationADCScaleCommand}"/>
                     <Button Content="{x:Static res:Resources.ConvertADCButtonContent}" Command="{Binding ConvertADCCommand}"/>
                     <tools:TimePicker Value="{Binding TimeConvertation, Mode=TwoWay}"/>
                     <Button Content="{x:Static res:Resources.ConvertToTimeADCButtonContent}" Command="{Binding ConvertADCToTimeCommand}"/>
+                    <Button Content="{x:Static res:Resources.RunMonochromeButtonContent}" Command="{Binding RunMonochromeCommand}"/>
+                    <Button Content="{x:Static res:Resources.CancelADCOperationButtonContent}" Command="{Binding CancelADCOperationCommand}"/>
+
 
                     <Line X1="0" Y1="0" X2="1" Y2="0" Stretch="Fill" Style="{DynamicResource delimiterLineStyle}"/>
 

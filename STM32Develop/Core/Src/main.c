@@ -136,7 +136,7 @@ void ADC_Self_Offset_Calibration();
 void ADC_System_Offset_Calibration();
 void ADC_System_Gain_Calibration_5V();
 void ADC_SET_Input_Mux(uint8_t inputN, uint8_t inputP);
-void ADC_SEND_Two_Block_Command(uint16_t command);
+void ADC_Send_Command(int8_t command);
 uint8_t ADC_Read_Byte();
 
 int8_t ADC_GET_Chop_Mode();
@@ -239,6 +239,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	HAL_UART_Receive_IT(&huart1, rx_buffer, 4);
   HAL_UART_Transmit_IT(&huart1, rx_buffer, 4);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -246,13 +247,16 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-		HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_RESET);
-		ADC_SEND_Two_Block_Command(0x2500);
+		HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_RESET); 
+	
+		ADC_Send_Command(0x25);
+		ADC_Send_Command(0x01);
 		uint8_t byte = ADC_Read_Byte();
-
-				HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET);
 		HAL_UART_Transmit_IT(&huart1, &byte, 1);
+		HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET); 
+		
 		HAL_Delay(5000);
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -433,7 +437,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_5, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_5|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4|GPIO_PIN_6, GPIO_PIN_SET);
@@ -454,8 +458,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA4 PA5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5;
+  /*Configure GPIO pins : PA4 PA5 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -499,7 +503,6 @@ void REWIND_MONOCHROME()
 void ADC_Delay_CLK_Tiks(int8_t tiks){
 	TIM3->CNT = 0;
 	HAL_TIM_Base_Start_IT(&htim3);
-	HAL_TIM_Base_Start_IT(&htim2);
 	while(TIM3->CNT <tiks){}
 	HAL_TIM_Base_Stop_IT(&htim3);
 }
@@ -507,30 +510,22 @@ void ADC_Delay_CLK_Tiks(int8_t tiks){
 //!Use command:
 //!CS-LOW; Send command and CS Hight
 void ADC_Send_Command(int8_t command){
-	for(int i = 7; i>=0; i--){
+	for(int i = 0; i<8; i++){
 		if(command >> i & 0x01)
 			HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_DIN, GPIO_PIN_SET);
 		else
 			HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_DIN, GPIO_PIN_RESET);
+		ADC_Delay_CLK_Tiks(2);
 		HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_SCLK, GPIO_PIN_SET);
+		ADC_Delay_CLK_Tiks(2);
 		HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_SCLK, GPIO_PIN_RESET);
+		
 	}
 }
 
 //Send command by two byte to ADC 
 //!Use command:
 //!CS-LOW; Send command and CS Hight
-void ADC_SEND_Two_Block_Command(uint16_t command)
-{
-	for(int i = 0; i<16; i++){
-		if(command >> i & 0x01)
-			HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_DIN, GPIO_PIN_SET);
-		else
-			HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_DIN, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_SCLK, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_SCLK, GPIO_PIN_RESET);
-	}
-}
 
 //Read byte register ADC
  uint8_t ADC_Read_Byte()
@@ -540,8 +535,10 @@ void ADC_SEND_Two_Block_Command(uint16_t command)
 	{
 		HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_SCLK, GPIO_PIN_SET);
 		uint8_t val = HAL_GPIO_ReadPin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_DOUT) << i;
+		ADC_Delay_CLK_Tiks(2);
 		result = result | val;
 		HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_SCLK, GPIO_PIN_RESET);
+		ADC_Delay_CLK_Tiks(2);
 
 	}
 	return result;
@@ -573,7 +570,7 @@ void ADC_START1()
 	HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_RESET);
 	ADC_Send_Command(ADC_START1_COMMAND);
 	HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET);
-	ADC_Delay_CLK_Tiks(2);
+	
 }
 void ADC_STOP1()
 {
@@ -598,11 +595,10 @@ uint32_t ADC_READ_Data1()
 //adress  - 4 bit; size - 4 bit
 uint8_t ADC_READ_Ceil_Memory(uint8_t adress)
 {
-	int16_t command = ADC_MASK_READ_REGISTERS_COMMAND + adress;
-	command = command<<8;
-	command = command | 7;
+	uint8_t command = ADC_MASK_READ_REGISTERS_COMMAND + adress;
 	HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_RESET);
-	ADC_SEND_Two_Block_Command(command);
+	ADC_Send_Command(command);
+	ADC_Send_Command(0x00);
 	uint8_t res = ADC_Read_Byte();
 	HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET);
 	return res;
@@ -614,7 +610,8 @@ void ADC_WRITE_Ceil_Memory(uint8_t adress, uint8_t value)
 	command = command<<8;
 	command = command | 0x00;
 	HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_RESET);
-	ADC_SEND_Two_Block_Command(command);
+	ADC_Send_Command(command);
+	ADC_Send_Command(0x00);
 	ADC_Send_Command(value);
 	HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET);
 }
@@ -673,6 +670,21 @@ void ADC_Convert(int16_t time)
 	time_convert = TIM2->CNT;
 }
 
+void RunMonochrome(uint16_t time)
+{
+	TIM2->CNT = 0;
+	summ = 0;
+	count = 0;
+	HAL_TIM_Base_Start_IT(&htim2);
+	START_MONOCHROME();
+	while(TIM2->CNT < time && !CAN_CONVERTATION)
+	{
+		
+	}
+	HAL_TIM_Base_Stop_IT(&htim2);
+	STOP_MONOCHROME();
+	time_convert = TIM2->CNT;
+}
 
 void REWIND(int16_t time)
 {
@@ -1268,6 +1280,13 @@ void Convert_Input_Data(uint8_t* data)
 		case 12:
 		{
 			REWIND(time_convert);
+			break;
+		}
+		case 13:
+		{
+			uint16_t *timeh = &data[2];
+			uint16_t time = *timeh;
+			RunMonochrome(time);
 			break;
 		}
 	}

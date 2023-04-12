@@ -180,6 +180,12 @@
   <data name="LogReadADCPropertiesStart" xml:space="preserve">
     <value>Start read propertties from ADC</value>
   </data>
+  <data name="LogRunMonochromeFinish" xml:space="preserve">
+    <value>Run monochrome successfully</value>
+  </data>
+  <data name="LogRunMonochromeStart" xml:space="preserve">
+    <value>Run monochrome</value>
+  </data>
   <data name="LogStartConvertGraph" xml:space="preserve">
     <value>Start measure by ADC</value>
   </data>
@@ -203,6 +209,9 @@
   </data>
   <data name="PortStopBitsLabel" xml:space="preserve">
     <value>Stop bits</value>
+  </data>
+  <data name="RunMonochromeButtonContent" xml:space="preserve">
+    <value>Run only monochromator</value>
   </data>
   <data name="TestMirrorCommandButtonContent" xml:space="preserve">
     <value>Test mirror ADC</value>

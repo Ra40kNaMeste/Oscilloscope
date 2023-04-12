@@ -228,6 +228,9 @@ namespace ADC_Control
         /// Конвертирует по времени в график
         /// </summary>
         public UniversalCommand ConvertADCToTimeCommand => convertADCToTimeCommand ??= new(ConvertADCToTime, CanInvokeADCOperation);
+
+        private UniversalCommand? runMonochromeCommand;
+        public UniversalCommand RunMonochromeCommand => runMonochromeCommand ??= new(RunMonochrome, CanInvokeADCOperation);
         #endregion //Head
 
         #region Body
@@ -299,6 +302,23 @@ namespace ADC_Control
                 {
 
                     Logger.Info(Resources.LogErrorConvertGraph);
+                }
+            }
+        }
+
+        private void RunMonochrome(object? parameter)
+        {
+            if (short.TryParse(TimeConvertation.TotalMilliseconds.ToString(), out short time))
+            {
+                try
+                {
+                    Logger.Info(Resources.LogRunMonochromeStart);
+                    ADC.StartMonochrome(time, GetToken());
+                    Logger.Info(Resources.LogRunMonochromeFinish);
+                }
+                catch (Exception)
+                {
+
                 }
             }
         }

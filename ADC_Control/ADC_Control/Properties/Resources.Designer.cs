@@ -250,6 +250,24 @@ namespace ADC_Control.Properties {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Run monochrome successfully.
+        /// </summary>
+        public static string LogRunMonochromeFinish {
+            get {
+                return ResourceManager.GetString("LogRunMonochromeFinish", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Run monochrome.
+        /// </summary>
+        public static string LogRunMonochromeStart {
+            get {
+                return ResourceManager.GetString("LogRunMonochromeStart", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Start measure by ADC.
         /// </summary>
         public static string LogStartConvertGraph {
@@ -318,6 +336,15 @@ namespace ADC_Control.Properties {
         public static string PortStopBitsLabel {
             get {
                 return ResourceManager.GetString("PortStopBitsLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Run only monochromator.
+        /// </summary>
+        public static string RunMonochromeButtonContent {
+            get {
+                return ResourceManager.GetString("RunMonochromeButtonContent", resourceCulture);
             }
         }
         

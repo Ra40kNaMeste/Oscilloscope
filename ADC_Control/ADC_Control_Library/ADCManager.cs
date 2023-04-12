@@ -28,7 +28,8 @@ namespace ADC_Control_Library
         ReadPropertyAdc = 9,
         SetProperty = 10,
         CancelConvert = 11,
-        RewindMonochrome = 12
+        RewindMonochrome = 12,
+        StartOnlyMonochrome = 13
     }
     public sealed class ADCManager : INotifyPropertyChanged, IDisposable
     {
@@ -199,7 +200,7 @@ namespace ADC_Control_Library
         public SerialPort Port { get; init; }
 
         private List<string>? ports;
-        public List<string>? Ports 
+        public List<string>? Ports
         {
             get => ports;
             private set
@@ -209,13 +210,15 @@ namespace ADC_Control_Library
             }
         }
         #endregion //SettingUARTPort
+
+        #region Commands
         public void UpdatePorts()
         {
             Ports = SerialPort.GetPortNames().ToList();
         }
         public bool TestMirror(ushort value, CancellationToken token)
         {
-            if(!Port.IsOpen)
+            if (!Port.IsOpen)
             {
                 LogService?.Write(Resources.LogErrorOpenPort, LogLevels.Error);
                 throw new PortClosedException();
@@ -329,6 +332,26 @@ namespace ADC_Control_Library
             SendMessage(Commands.CalibrationScale, 0);
             LogService?.Write(Resources.LogCalibrationScaleFinish, LogLevels.Info);
         }
+        public void StartMonochrome(short time, CancellationToken token)
+        {
+            if (!Port.IsOpen)
+            {
+                LogService?.Write(Resources.LogErrorOpenPort, LogLevels.Error);
+                throw new PortClosedException();
+            }
+            if (!(ADCDataReader is GraphdataFromPortReader))
+                ADCDataReader = new GraphdataFromPortReader();
+            SendMessage(Commands.StartOnlyMonochrome, (uint)time);;
+            for (int i = 0; i < time; i++)
+            {
+                Thread.Sleep(1);
+                if (token.IsCancellationRequested)
+                    break;
+            }
+            LogService?.Write(Resources.LogStartMonochrome, LogLevels.Info);
+        }
+
+        #endregion //Commands
         private void SendMessage(Commands command, uint dates)
         {
             if (!Port.IsOpen)

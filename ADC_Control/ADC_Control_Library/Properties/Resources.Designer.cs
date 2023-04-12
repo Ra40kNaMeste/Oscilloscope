@@ -268,6 +268,15 @@ namespace ADC_Control_Library.Properties {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Start monochrome successfully.
+        /// </summary>
+        internal static string LogStartMonochrome {
+            get {
+                return ResourceManager.GetString("LogStartMonochrome", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на .
         /// </summary>
         internal static string LogStartReadDataPort {

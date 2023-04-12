@@ -3,9 +3,9 @@
 <title>Static Call Graph - [STM32Develop\STM32Develop.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image STM32Develop\STM32Develop.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Tue Apr  4 12:17:43 2023
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Sat Apr  8 11:39:43 2023
 <BR><P>
-<H3>Maximum Stack Usage =        156 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
+<H3>Maximum Stack Usage =        164 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
 __rt_entry_main &rArr; main &rArr; HAL_UART_Init &rArr; HAL_UART_MspInit &rArr; HAL_GPIO_Init
 <P>
@@ -203,7 +203,7 @@ Global Symbols
 <P><STRONG><a name="[9b]"></a>__rt_entry_postsh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$00000009))
 
 <P><STRONG><a name="[40]"></a>__rt_entry_main</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$0000000D))
-<BR><BR>[Stack]<UL><LI>Max Depth = 156 + Unknown Stack Size
+<BR><BR>[Stack]<UL><LI>Max Depth = 164 + Unknown Stack Size
 <LI>Call Chain = __rt_entry_main &rArr; main &rArr; HAL_UART_Init &rArr; HAL_UART_MspInit &rArr; HAL_GPIO_Init
 </UL>
 <BR>[Calls]<UL><LI><a href="#[41]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
@@ -406,106 +406,106 @@ Global Symbols
 
 <P><STRONG><a name="[a5]"></a>__semihosting_library_function</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, indicate_semi.o(.text), UNUSED)
 
-<P><STRONG><a name="[4a]"></a>ADC_Convert</STRONG> (Thumb, 298 bytes, Stack size 40 bytes, main.o(.text.ADC_Convert))
-<BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = ADC_Convert &rArr; ADC_WRITE_Ceil_Memory &rArr; ADC_Send_Command
+<P><STRONG><a name="[4a]"></a>ADC_APPEND_Byte_To_Register</STRONG> (Thumb, 132 bytes, Stack size 24 bytes, main.o(.text.ADC_APPEND_Byte_To_Register))
+<BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = ADC_APPEND_Byte_To_Register &rArr; ADC_Read_Byte
 </UL>
-<BR>[Calls]<UL><LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_WRITE_Ceil_Memory
-<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_READ_Ceil_Memory
-<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Start_By_Pin
-<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_ReadPin
+<BR>[Calls]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Send_Command
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
+</UL>
+<BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetADCPropertySwitch
+<LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_One_Measure_Convert
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
+</UL>
+
+<P><STRONG><a name="[4e]"></a>ADC_Convert</STRONG> (Thumb, 298 bytes, Stack size 40 bytes, main.o(.text.ADC_Convert))
+<BR><BR>[Stack]<UL><LI>Max Depth = 96<LI>Call Chain = ADC_Convert &rArr; ADC_APPEND_Byte_To_Register &rArr; ADC_Read_Byte
+</UL>
+<BR>[Calls]<UL><LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_APPEND_Byte_To_Register
+<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Start_By_Pin
+<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_ReadPin
+<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
 <LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Stop_IT
-<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
-<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
 <LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Transmit_IT
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 </UL>
 <BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
 </UL>
 
-<P><STRONG><a name="[54]"></a>ADC_One_Measure_Convert</STRONG> (Thumb, 146 bytes, Stack size 24 bytes, main.o(.text.ADC_One_Measure_Convert))
-<BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = ADC_One_Measure_Convert &rArr; ADC_WRITE_Ceil_Memory &rArr; ADC_Send_Command
+<P><STRONG><a name="[54]"></a>ADC_One_Measure_Convert</STRONG> (Thumb, 138 bytes, Stack size 16 bytes, main.o(.text.ADC_One_Measure_Convert))
+<BR><BR>[Stack]<UL><LI>Max Depth = 72<LI>Call Chain = ADC_One_Measure_Convert &rArr; ADC_APPEND_Byte_To_Register &rArr; ADC_Read_Byte
 </UL>
 <BR>[Calls]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Transmit
-<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_WRITE_Ceil_Memory
-<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_READ_Ceil_Memory
-<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Start_By_Pin
-<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_ReadPin
-<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
+<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_APPEND_Byte_To_Register
+<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Start_By_Pin
+<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_ReadPin
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 </UL>
 <BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
 </UL>
 
-<P><STRONG><a name="[4b]"></a>ADC_READ_Ceil_Memory</STRONG> (Thumb, 122 bytes, Stack size 24 bytes, main.o(.text.ADC_READ_Ceil_Memory))
-<BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = ADC_READ_Ceil_Memory &rArr; ADC_Read_Byte
+<P><STRONG><a name="[4d]"></a>ADC_Read_Byte</STRONG> (Thumb, 190 bytes, Stack size 32 bytes, main.o(.text.ADC_Read_Byte))
+<BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = ADC_Read_Byte
 </UL>
-<BR>[Calls]<UL><LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
+<BR>[Calls]<UL><LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_ReadPin
+<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
+<LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Stop_IT
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 </UL>
-<BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
-<LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetADCPropertySwitch
-<LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GetADCPropertySwitch
+<BR>[Called By]<UL><LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GetADCPropertySwitch
+<LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_System_Gain_Calibration_5V
 <LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Self_Offset_Calibration
 <LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_One_Measure_Convert
-<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
+<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_APPEND_Byte_To_Register
 </UL>
 
-<P><STRONG><a name="[51]"></a>ADC_Read_Byte</STRONG> (Thumb, 380 bytes, Stack size 16 bytes, main.o(.text.ADC_Read_Byte))
-<BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = ADC_Read_Byte
+<P><STRONG><a name="[56]"></a>ADC_Self_Offset_Calibration</STRONG> (Thumb, 336 bytes, Stack size 16 bytes, main.o(.text.ADC_Self_Offset_Calibration))
+<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = ADC_Self_Offset_Calibration &rArr; ADC_Read_Byte
 </UL>
-<BR>[Calls]<UL><LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_ReadPin
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
-</UL>
-<BR>[Called By]<UL><LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_One_Measure_Convert
-<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
-<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_READ_Ceil_Memory
-<LI><a href="#[41]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
-</UL>
-
-<P><STRONG><a name="[56]"></a>ADC_Self_Offset_Calibration</STRONG> (Thumb, 94 bytes, Stack size 8 bytes, main.o(.text.ADC_Self_Offset_Calibration))
-<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = ADC_Self_Offset_Calibration &rArr; ADC_WRITE_Ceil_Memory &rArr; ADC_Send_Command
-</UL>
-<BR>[Calls]<UL><LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_WRITE_Ceil_Memory
-<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_READ_Ceil_Memory
-<LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Send_Command
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
+<BR>[Calls]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Send_Command
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 </UL>
 <BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
 </UL>
 
-<P><STRONG><a name="[57]"></a>ADC_Send_Command</STRONG> (Thumb, 368 bytes, Stack size 16 bytes, main.o(.text.ADC_Send_Command))
-<BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = ADC_Send_Command
+<P><STRONG><a name="[4c]"></a>ADC_Send_Command</STRONG> (Thumb, 186 bytes, Stack size 32 bytes, main.o(.text.ADC_Send_Command))
+<BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = ADC_Send_Command
 </UL>
-<BR>[Calls]<UL><LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
+<BR>[Calls]<UL><LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
+<LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Stop_IT
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 </UL>
 <BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
+<LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GetADCPropertySwitch
+<LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_System_Gain_Calibration_5V
 <LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Self_Offset_Calibration
-<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_WRITE_Ceil_Memory
+<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_APPEND_Byte_To_Register
 </UL>
 
-<P><STRONG><a name="[4f]"></a>ADC_Start_By_Pin</STRONG> (Thumb, 196 bytes, Stack size 24 bytes, main.o(.text.ADC_Start_By_Pin))
+<P><STRONG><a name="[50]"></a>ADC_Start_By_Pin</STRONG> (Thumb, 172 bytes, Stack size 24 bytes, main.o(.text.ADC_Start_By_Pin))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = ADC_Start_By_Pin
 </UL>
-<BR>[Calls]<UL><LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Stop_IT
-<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
+<BR>[Calls]<UL><LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
+<LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Stop_IT
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 </UL>
 <BR>[Called By]<UL><LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_One_Measure_Convert
 <LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REWIND
-<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
 </UL>
 
-<P><STRONG><a name="[4c]"></a>ADC_WRITE_Ceil_Memory</STRONG> (Thumb, 120 bytes, Stack size 24 bytes, main.o(.text.ADC_WRITE_Ceil_Memory))
-<BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = ADC_WRITE_Ceil_Memory &rArr; ADC_Send_Command
+<P><STRONG><a name="[57]"></a>ADC_System_Gain_Calibration_5V</STRONG> (Thumb, 192 bytes, Stack size 16 bytes, main.o(.text.ADC_System_Gain_Calibration_5V))
+<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = ADC_System_Gain_Calibration_5V &rArr; ADC_Read_Byte
 </UL>
-<BR>[Calls]<UL><LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Send_Command
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
+<BR>[Calls]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Send_Command
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 </UL>
 <BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
-<LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetADCPropertySwitch
-<LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Self_Offset_Calibration
-<LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_One_Measure_Convert
-<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
 </UL>
 
 <P><STRONG><a name="[4]"></a>BusFault_Handler</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, stm32f1xx_it.o(.text.BusFault_Handler))
@@ -515,22 +515,21 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f103xb.o(RESET)
 </UL>
-<P><STRONG><a name="[58]"></a>Convert_Input_Data</STRONG> (Thumb, 720 bytes, Stack size 16 bytes, main.o(.text.Convert_Input_Data))
-<BR><BR>[Stack]<UL><LI>Max Depth = 96<LI>Call Chain = Convert_Input_Data &rArr; ADC_Convert &rArr; ADC_WRITE_Ceil_Memory &rArr; ADC_Send_Command
+<P><STRONG><a name="[58]"></a>Convert_Input_Data</STRONG> (Thumb, 684 bytes, Stack size 16 bytes, main.o(.text.Convert_Input_Data))
+<BR><BR>[Stack]<UL><LI>Max Depth = 112<LI>Call Chain = Convert_Input_Data &rArr; ADC_Convert &rArr; ADC_APPEND_Byte_To_Register &rArr; ADC_Read_Byte
 </UL>
 <BR>[Calls]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetADCPropertySwitch
 <LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GetADCPropertySwitch
+<LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_System_Gain_Calibration_5V
 <LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Self_Offset_Calibration
 <LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_One_Measure_Convert
 <LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REWIND
-<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
-<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_WRITE_Ceil_Memory
-<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_READ_Ceil_Memory
-<LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Send_Command
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
+<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Send_Command
+<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
 <LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Stop_IT
-<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
 <LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Transmit_IT
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 </UL>
 <BR>[Called By]<UL><LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_RxCpltCallback
 </UL>
@@ -538,10 +537,12 @@ Global Symbols
 <P><STRONG><a name="[7]"></a>DebugMon_Handler</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, stm32f1xx_it.o(.text.DebugMon_Handler))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f103xb.o(RESET)
 </UL>
-<P><STRONG><a name="[5a]"></a>GetADCPropertySwitch</STRONG> (Thumb, 732 bytes, Stack size 8 bytes, main.o(.text.GetADCPropertySwitch))
-<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = GetADCPropertySwitch &rArr; ADC_READ_Ceil_Memory &rArr; ADC_Read_Byte
+<P><STRONG><a name="[5a]"></a>GetADCPropertySwitch</STRONG> (Thumb, 1404 bytes, Stack size 16 bytes, main.o(.text.GetADCPropertySwitch))
+<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = GetADCPropertySwitch &rArr; ADC_Read_Byte
 </UL>
-<BR>[Calls]<UL><LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_READ_Ceil_Memory
+<BR>[Calls]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Send_Command
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 </UL>
 <BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
 </UL>
@@ -571,23 +572,25 @@ Global Symbols
 <LI><a href="#[41]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[50]"></a>HAL_GPIO_ReadPin</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, stm32f1xx_hal_gpio.o(.text.HAL_GPIO_ReadPin))
+<P><STRONG><a name="[51]"></a>HAL_GPIO_ReadPin</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, stm32f1xx_hal_gpio.o(.text.HAL_GPIO_ReadPin))
 <BR><BR>[Called By]<UL><LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_One_Measure_Convert
-<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
-<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
+<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<LI><a href="#[41]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[4e]"></a>HAL_GPIO_WritePin</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, stm32f1xx_hal_gpio.o(.text.HAL_GPIO_WritePin))
+<P><STRONG><a name="[4b]"></a>HAL_GPIO_WritePin</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, stm32f1xx_hal_gpio.o(.text.HAL_GPIO_WritePin))
 <BR><BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
+<LI><a href="#[5a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GetADCPropertySwitch
+<LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_System_Gain_Calibration_5V
 <LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Self_Offset_Calibration
 <LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_One_Measure_Convert
 <LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REWIND
-<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
-<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_WRITE_Ceil_Memory
-<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_READ_Ceil_Memory
-<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Start_By_Pin
-<LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Send_Command
-<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
+<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_APPEND_Byte_To_Register
+<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Start_By_Pin
+<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Send_Command
 <LI><a href="#[41]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
@@ -692,18 +695,24 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Init
 </UL>
 
-<P><STRONG><a name="[4d]"></a>HAL_TIM_Base_Start_IT</STRONG> (Thumb, 110 bytes, Stack size 0 bytes, stm32f1xx_hal_tim.o(.text.HAL_TIM_Base_Start_IT))
+<P><STRONG><a name="[4f]"></a>HAL_TIM_Base_Start_IT</STRONG> (Thumb, 110 bytes, Stack size 0 bytes, stm32f1xx_hal_tim.o(.text.HAL_TIM_Base_Start_IT))
 <BR><BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
 <LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REWIND
-<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
-<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Start_By_Pin
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
+<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Start_By_Pin
+<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Send_Command
+<LI><a href="#[41]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
 <P><STRONG><a name="[53]"></a>HAL_TIM_Base_Stop_IT</STRONG> (Thumb, 60 bytes, Stack size 0 bytes, stm32f1xx_hal_tim.o(.text.HAL_TIM_Base_Stop_IT))
 <BR><BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
 <LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REWIND
-<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
-<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Start_By_Pin
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
+<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Start_By_Pin
+<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Send_Command
+<LI><a href="#[41]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
 <P><STRONG><a name="[78]"></a>HAL_TIM_ConfigClockSource</STRONG> (Thumb, 402 bytes, Stack size 8 bytes, stm32f1xx_hal_tim.o(.text.HAL_TIM_ConfigClockSource))
@@ -723,7 +732,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[68]"></a>HAL_UART_IRQHandler</STRONG> (Thumb, 624 bytes, Stack size 24 bytes, stm32f1xx_hal_uart.o(.text.HAL_UART_IRQHandler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 140<LI>Call Chain = HAL_UART_IRQHandler &rArr; UART_Receive_IT &rArr; HAL_UART_RxCpltCallback &rArr; Convert_Input_Data &rArr; ADC_Convert &rArr; ADC_WRITE_Ceil_Memory &rArr; ADC_Send_Command
+<BR><BR>[Stack]<UL><LI>Max Depth = 156<LI>Call Chain = HAL_UART_IRQHandler &rArr; UART_Receive_IT &rArr; HAL_UART_RxCpltCallback &rArr; Convert_Input_Data &rArr; ADC_Convert &rArr; ADC_APPEND_Byte_To_Register &rArr; ADC_Read_Byte
 </UL>
 <BR>[Calls]<UL><LI><a href="#[6b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_DMA_Abort
 <LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_DMA_Abort_IT
@@ -761,7 +770,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[75]"></a>HAL_UART_RxCpltCallback</STRONG> (Thumb, 34 bytes, Stack size 16 bytes, main.o(.text.HAL_UART_RxCpltCallback))
-<BR><BR>[Stack]<UL><LI>Max Depth = 112<LI>Call Chain = HAL_UART_RxCpltCallback &rArr; Convert_Input_Data &rArr; ADC_Convert &rArr; ADC_WRITE_Ceil_Memory &rArr; ADC_Send_Command
+<BR><BR>[Stack]<UL><LI>Max Depth = 128<LI>Call Chain = HAL_UART_RxCpltCallback &rArr; Convert_Input_Data &rArr; ADC_Convert &rArr; ADC_APPEND_Byte_To_Register &rArr; ADC_Read_Byte
 </UL>
 <BR>[Calls]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
 <LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Receive_IT
@@ -779,7 +788,7 @@ Global Symbols
 
 <P><STRONG><a name="[52]"></a>HAL_UART_Transmit_IT</STRONG> (Thumb, 68 bytes, Stack size 0 bytes, stm32f1xx_hal_uart.o(.text.HAL_UART_Transmit_IT))
 <BR><BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
-<LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Convert
 <LI><a href="#[41]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
@@ -814,10 +823,10 @@ Global Symbols
 <P><STRONG><a name="[59]"></a>REWIND</STRONG> (Thumb, 134 bytes, Stack size 16 bytes, main.o(.text.REWIND))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = REWIND &rArr; ADC_Start_By_Pin
 </UL>
-<BR>[Calls]<UL><LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Start_By_Pin
+<BR>[Calls]<UL><LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Start_By_Pin
+<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
 <LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Stop_IT
-<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 </UL>
 <BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
 </UL>
@@ -825,11 +834,10 @@ Global Symbols
 <P><STRONG><a name="[6]"></a>SVC_Handler</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, stm32f1xx_it.o(.text.SVC_Handler))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f103xb.o(RESET)
 </UL>
-<P><STRONG><a name="[5b]"></a>SetADCPropertySwitch</STRONG> (Thumb, 746 bytes, Stack size 16 bytes, main.o(.text.SetADCPropertySwitch))
-<BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = SetADCPropertySwitch &rArr; ADC_WRITE_Ceil_Memory &rArr; ADC_Send_Command
+<P><STRONG><a name="[5b]"></a>SetADCPropertySwitch</STRONG> (Thumb, 370 bytes, Stack size 16 bytes, main.o(.text.SetADCPropertySwitch))
+<BR><BR>[Stack]<UL><LI>Max Depth = 72<LI>Call Chain = SetADCPropertySwitch &rArr; ADC_APPEND_Byte_To_Register &rArr; ADC_Read_Byte
 </UL>
-<BR>[Calls]<UL><LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_WRITE_Ceil_Memory
-<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_READ_Ceil_Memory
+<BR>[Calls]<UL><LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_APPEND_Byte_To_Register
 </UL>
 <BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Convert_Input_Data
 </UL>
@@ -843,7 +851,7 @@ Global Symbols
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f103xb.o(.text)
 </UL>
 <P><STRONG><a name="[2f]"></a>USART1_IRQHandler</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, stm32f1xx_it.o(.text.USART1_IRQHandler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 140<LI>Call Chain = USART1_IRQHandler &rArr; HAL_UART_IRQHandler &rArr; UART_Receive_IT &rArr; HAL_UART_RxCpltCallback &rArr; Convert_Input_Data &rArr; ADC_Convert &rArr; ADC_WRITE_Ceil_Memory &rArr; ADC_Send_Command
+<BR><BR>[Stack]<UL><LI>Max Depth = 156<LI>Call Chain = USART1_IRQHandler &rArr; HAL_UART_IRQHandler &rArr; UART_Receive_IT &rArr; HAL_UART_RxCpltCallback &rArr; Convert_Input_Data &rArr; ADC_Convert &rArr; ADC_APPEND_Byte_To_Register &rArr; ADC_Read_Byte
 </UL>
 <BR>[Calls]<UL><LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_IRQHandler
 </UL>
@@ -856,11 +864,13 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f103xb.o(RESET)
 </UL>
-<P><STRONG><a name="[41]"></a>main</STRONG> (Thumb, 730 bytes, Stack size 64 bytes, main.o(.text.main))
-<BR><BR>[Stack]<UL><LI>Max Depth = 156<LI>Call Chain = main &rArr; HAL_UART_Init &rArr; HAL_UART_MspInit &rArr; HAL_GPIO_Init
+<P><STRONG><a name="[41]"></a>main</STRONG> (Thumb, 1150 bytes, Stack size 72 bytes, main.o(.text.main))
+<BR><BR>[Stack]<UL><LI>Max Depth = 164<LI>Call Chain = main &rArr; HAL_UART_Init &rArr; HAL_UART_MspInit &rArr; HAL_GPIO_Init
 </UL>
-<BR>[Calls]<UL><LI><a href="#[5c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_Delay
-<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ADC_Read_Byte
+<BR>[Calls]<UL><LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_ReadPin
+<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
+<LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Stop_IT
+<LI><a href="#[5c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_Delay
 <LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Transmit_IT
 <LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Receive_IT
 <LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Init
@@ -868,7 +878,7 @@ Global Symbols
 <LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_ConfigClockSource
 <LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Init
 <LI><a href="#[73]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_Init
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 <LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_RCC_ClockConfig
 <LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_RCC_OscConfig
 <LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_Init
@@ -880,7 +890,7 @@ Global Symbols
 Local Symbols
 </H3>
 <P><STRONG><a name="[69]"></a>UART_Receive_IT</STRONG> (Thumb, 182 bytes, Stack size 4 bytes, stm32f1xx_hal_uart.o(.text.UART_Receive_IT))
-<BR><BR>[Stack]<UL><LI>Max Depth = 116<LI>Call Chain = UART_Receive_IT &rArr; HAL_UART_RxCpltCallback &rArr; Convert_Input_Data &rArr; ADC_Convert &rArr; ADC_WRITE_Ceil_Memory &rArr; ADC_Send_Command
+<BR><BR>[Stack]<UL><LI>Max Depth = 132<LI>Call Chain = UART_Receive_IT &rArr; HAL_UART_RxCpltCallback &rArr; Convert_Input_Data &rArr; ADC_Convert &rArr; ADC_APPEND_Byte_To_Register &rArr; ADC_Read_Byte
 </UL>
 <BR>[Calls]<UL><LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_RxCpltCallback
 <LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UARTEx_RxEventCallback

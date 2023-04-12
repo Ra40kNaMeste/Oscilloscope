@@ -186,6 +186,9 @@
   <data name="LogSendMessageSuccessfully" xml:space="preserve">
     <value>Send message {0} continued</value>
   </data>
+  <data name="LogStartMonochrome" xml:space="preserve">
+    <value>Start monochrome successfully</value>
+  </data>
   <data name="LogStartReadDataPort" xml:space="preserve">
     <value />
   </data>

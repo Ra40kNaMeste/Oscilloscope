@@ -331,20 +331,20 @@ namespace ADC_Control
                 try
                 {
                     Logger.Info(Resources.LogRunMonochromeStart);
-                    //var element = AutomationElement.RootElement.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "Untitled 1 - SignalExpress"));
-                    //var commandBar = element.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "DockTop"));
-                    //element.SetFocus();
-                    //Point pnt = commandBar.Current.BoundingRectangle.Location;
-                    //uint x = (uint)pnt.X + 140;
-                    //uint y = (uint)pnt.Y + 30;
-                    //SetCursorPos((int)x, (int)y);
-                    //mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
-                    //mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
-                    //x -= 140;
-                    //y += 80;
-                    //SetCursorPos((int)x, (int)y);
-                    //mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
-                    //mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+                    var element = AutomationElement.RootElement.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "Untitled 1 - SignalExpress"));
+                    var commandBar = element.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "DockTop"));
+                    element.SetFocus();
+                    Point pnt = commandBar.Current.BoundingRectangle.Location;
+                    uint x = (uint)pnt.X + 140;
+                    uint y = (uint)pnt.Y + 30;
+                    SetCursorPos((int)x, (int)y);
+                    mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
+                    mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+                    x -= 140;
+                    y += 80;
+                    SetCursorPos((int)x, (int)y);
+                    mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
+                    mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
 
 
                     ADC.StartMonochrome(time, GetToken());

@@ -224,9 +224,9 @@ namespace ADC_Control_Library
                 throw new PortClosedException();
             }
             LogService?.Write(string.Format(Resources.LogTestMirrorSend, value), LogLevels.Info);
-            SendMessage(Commands.TestMirror, value);
             ADCDataReader = new Int32DataFromPortReader();
-            ushort res = (ushort)ADCDataReader.Read(Port, token);
+            SendMessage(Commands.TestMirror, value);
+            ushort res = (ushort)ADCDataReader.Read(Port, token);           
             LogService?.Write(string.Format(Resources.LogTestMirrorReceived, res), LogLevels.Info);
             return res == value;
         }

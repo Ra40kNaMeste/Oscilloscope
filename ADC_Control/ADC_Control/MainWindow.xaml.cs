@@ -12,6 +12,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Automation;
+using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
+using System.Runtime.InteropServices;
 
 namespace ADC_Control
 {
@@ -20,6 +23,7 @@ namespace ADC_Control
     /// </summary>
     public partial class MainWindow : Window
     {
+
         public MainWindow()
         {
             InitializeComponent();
@@ -28,5 +32,6 @@ namespace ADC_Control
                 ((IDisposable)DataContext).Dispose();
             };
         }
+
     }
 }

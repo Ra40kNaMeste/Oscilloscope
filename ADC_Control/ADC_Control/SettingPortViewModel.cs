@@ -69,10 +69,10 @@ namespace ADC_Control
         public UniversalCommand SavePortSettingsCommand => savePortSettingsCommand ??= new(SavePortSettings, (p)=> IsChangedProperties);
         private void SavePortSettings(object? parameter)
         {
-            Properties.Settings.Default[paritySettingName] = Parity;
+            Properties.Settings.Default[paritySettingName] = (int)Parity;
             Properties.Settings.Default[baundRateSettingName] = BaundRate;
             Properties.Settings.Default[dataBitsSettingName] = DataBits;
-            Properties.Settings.Default[stopBitsSettingName] = StopBits;
+            Properties.Settings.Default[stopBitsSettingName] = (int)StopBits;
             Properties.Settings.Default.Save();
         }
 

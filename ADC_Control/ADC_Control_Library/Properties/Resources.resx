@@ -193,7 +193,7 @@
     <value />
   </data>
   <data name="LogTestMirrorReceived" xml:space="preserve">
-    <value>Receive data {1} from ADC</value>
+    <value>Receive data {0} from ADC</value>
   </data>
   <data name="LogTestMirrorSend" xml:space="preserve">
     <value>TestMirror: send data {0} to ADC</value>

@@ -218,17 +218,34 @@ namespace ADC_Control_Library
         }
         public bool TestMirror(ushort value, CancellationToken token)
         {
-            if (!Port.IsOpen)
+            try
             {
-                LogService?.Write(Resources.LogErrorOpenPort, LogLevels.Error);
-                throw new PortClosedException();
+                if (!Port.IsOpen)
+                {
+                    LogService?.Write(Resources.LogErrorOpenPort, LogLevels.Error);
+                    throw new PortClosedException();
+                }
+                LogService?.Write(string.Format(Resources.LogTestMirrorSend, value), LogLevels.Info);
+
+                ADCDataReader = new Int32DataFromPortReader();
+                var task = ADCDataReader.Read(Port, token);
+                task.Start();
+                SendMessage(Commands.TestMirror, value);
+                task.Wait();
+                int res = (int)task.Result >> 16;
+                LogService?.Write(string.Format(Resources.LogTestMirrorReceived, res), LogLevels.Info);
+                return res == value;
             }
-            LogService?.Write(string.Format(Resources.LogTestMirrorSend, value), LogLevels.Info);
-            ADCDataReader = new Int32DataFromPortReader();
-            SendMessage(Commands.TestMirror, value);
-            ushort res = (ushort)ADCDataReader.Read(Port, token);           
-            LogService?.Write(string.Format(Resources.LogTestMirrorReceived, res), LogLevels.Info);
-            return res == value;
+            catch (TimeoutException)
+            {
+                return false;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
         }
 
         public void Reset()
@@ -309,8 +326,12 @@ namespace ADC_Control_Library
             LogService?.Write(Resources.LogConvertStart, LogLevels.Debug);
             if (!(ADCDataReader is Int32DataFromPortReader))
                 ADCDataReader = new Int32DataFromPortReader();
+            var task = ADCDataReader.Read(Port, token);
+            task.Start();
             SendMessage(Commands.Convert, 0);
-            int res = (int)ADCDataReader.Read(Port, token);
+            task.Wait();
+
+            int res = (int)task.Result;
             LogService?.Write(Resources.LogConvertFinish, LogLevels.Info);
             return res;
         }
@@ -341,7 +362,7 @@ namespace ADC_Control_Library
             }
             if (!(ADCDataReader is GraphdataFromPortReader))
                 ADCDataReader = new GraphdataFromPortReader();
-            SendMessage(Commands.StartOnlyMonochrome, (uint)time);;
+            SendMessage(Commands.StartOnlyMonochrome, (uint)time); ;
             for (int i = 0; i < time; i++)
             {
                 Thread.Sleep(1);
@@ -360,7 +381,7 @@ namespace ADC_Control_Library
                 throw new PortClosedException();
             }
             uint com = (uint)command;
-            com <<= 24;
+            dates <<= 16;
             dates |= com;
             LogService?.Write(string.Format(Resources.LogSendMessageStart, dates.ToString()), LogLevels.Trace);
             if (!Port.IsOpen)
@@ -379,8 +400,9 @@ namespace ADC_Control_Library
             if (!(ADCDataReader is GraphdataFromPortReader))
                 ADCDataReader = new GraphdataFromPortReader();
             List<Point> res = new();
-            await Task.Run(() => res = (List<Point>)ADCDataReader.Read(Port, token));
-            return res;
+            var task = ADCDataReader.Read(Port, token);
+            await task;
+            return (List<Point>)task.Result;
         }
         private IEnumerable<(ADCProperty, int)> ReadPropertiesFromADC()
         {
@@ -425,39 +447,65 @@ namespace ADC_Control_Library
     }
     interface IDataFromPortReaderable
     {
-        public object Read(SerialPort port, CancellationToken token);
+        public Task<object> Read(SerialPort port, CancellationToken token);
     }
     class Int32DataFromPortReader : IDataFromPortReaderable
     {
-        public object Read(SerialPort port, CancellationToken token)
+        public Task<object> Read(SerialPort port, CancellationToken token)
         {
-            byte[] bytes = new byte[4];
-            for (int i = 0; i < 4; i++)
+            return new Task<object>(() =>
             {
-                if (token.IsCancellationRequested)
-                    return 0;
-                port.Read(bytes, 0, 4);
-            }
-            return BitConverter.ToInt32(bytes, 0);
+                byte[] bytes = new byte[4];
+                byte[] val = new byte[4];
+                int size = 0;
+                while (!token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        int bufSize = port.Read(bytes, 0, 4);
+                        for (int i = size; i < size+bufSize; i++)
+                        {
+                            val[i] = bytes[i - size];
+                        }
+                        size+= bufSize;
+                        if (size == 4)
+                            break;
+                    }
+                    catch (TimeoutException) { }
+                }
+
+                return (int)BitConverter.ToInt32(val, 0);
+            });
+
         }
     }
 
     class GraphdataFromPortReader : IDataFromPortReaderable
     {
-        public object Read(SerialPort port, CancellationToken token)
+        public Task<object> Read(SerialPort port, CancellationToken token)
         {
-            List<Point> res = new();
-            while (token.IsCancellationRequested)
+            return new Task<object>(() =>
             {
-                res.Add(ReadCeil(port, token));
-            }
-            return res;
+                List<Point> res = new();
+                while (token.IsCancellationRequested)
+                {
+                    res.Add(ReadCeil(port, token));
+                }
+                return res;
+            });
+
         }
 
         Int32DataFromPortReader intReader = new();
         private Point ReadCeil(SerialPort port, CancellationToken token)
         {
-            return new((int)intReader.Read(port, token), (int)intReader.Read(port, token));
+            var xTask = intReader.Read(port, token);
+            xTask.Start();
+            xTask.Wait();
+            var yTask = intReader.Read(port, token);
+            yTask.Start();
+            yTask.Wait();
+            return new((int)xTask.Result, (int)yTask.Result);
         }
     }
 }

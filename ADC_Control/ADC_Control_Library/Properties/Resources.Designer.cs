@@ -286,7 +286,7 @@ namespace ADC_Control_Library.Properties {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Receive data {1} from ADC.
+        ///   Ищет локализованную строку, похожую на Receive data {0} from ADC.
         /// </summary>
         internal static string LogTestMirrorReceived {
             get {

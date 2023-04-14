@@ -274,6 +274,7 @@ namespace ADC_Control
                 if (IsMirrorTest == true)
                     UpdateADCProperties(null);
                 Logger.Info(string.Format(Resources.LogClosePortFinish, SelectPort));
+                isRunningOperation = false;
             }
             catch (Exception)
             {
@@ -301,7 +302,7 @@ namespace ADC_Control
 
         private bool CanInvokeADCOperation(object? parameter)
         {
-            return ADC.Port.IsOpen && !isRunningOperation && IsMirrorTest == true;
+            return ADC.Port.IsOpen && IsMirrorTest == true;
         }
 
         private void ConvertADCToTime(object? parameter)
@@ -314,6 +315,7 @@ namespace ADC_Control
                     Logger.Info(Resources.LogStartConvertGraph);
                     var result = ADC.ConvertToTime(time, GetToken());
                     Logger.Info(Resources.LogEndConvertGraph);
+                    isRunningOperation = false;
 
                 }
                 catch (Exception)
@@ -352,7 +354,12 @@ namespace ADC_Control
                 }
                 catch (Exception)
                 {
+
                     MessageBox.Show("Упс. что-то пошло не так");
+                }
+                finally
+                {
+                    isRunningOperation = false;
                 }
             }
         }
@@ -418,6 +425,15 @@ namespace ADC_Control
             OpenPortCommand.OnCanExecuteChanged();
             ClosePortCommand.OnCanExecuteChanged();
             UpdatePortParametersCommand.OnCanExecuteChanged();
+
+            TestMirrorCommand.OnCanExecuteChanged();
+            CalibrationADCInsideCommand.OnCanExecuteChanged();
+            CalibrationADCOutsideCommand.OnCanExecuteChanged();
+            CalibrationADCScaleCommand.OnCanExecuteChanged();
+
+            ConvertADCCommand.OnCanExecuteChanged();
+            ConvertADCToTimeCommand.OnCanExecuteChanged();
+            RunMonochromeCommand.OnCanExecuteChanged();
         }
 
         #endregion //PrivateMethods

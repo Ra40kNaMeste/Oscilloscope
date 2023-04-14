@@ -708,7 +708,7 @@ void REWIND(int16_t time)
 {
 	TIM2->CNT = 0;
 	HAL_TIM_Base_Start_IT(&htim2);
-	START_MONOCHROME();
+	REWIND_MONOCHROME();
 	HAL_TIM_Base_Start_IT(&htim2);
 	while(TIM2->CNT < time && !CAN_CONVERTATION)
 	{

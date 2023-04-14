@@ -250,6 +250,24 @@ namespace ADC_Control.Properties {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Rewinded successfully.
+        /// </summary>
+        public static string LogRewindMonochromeFinish {
+            get {
+                return ResourceManager.GetString("LogRewindMonochromeFinish", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Rewind start.
+        /// </summary>
+        public static string LogRewindMonochromeStart {
+            get {
+                return ResourceManager.GetString("LogRewindMonochromeStart", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Run monochrome successfully.
         /// </summary>
         public static string LogRunMonochromeFinish {
@@ -336,6 +354,15 @@ namespace ADC_Control.Properties {
         public static string PortStopBitsLabel {
             get {
                 return ResourceManager.GetString("PortStopBitsLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Rewind.
+        /// </summary>
+        public static string RewindMonochromeButtonContent {
+            get {
+                return ResourceManager.GetString("RewindMonochromeButtonContent", resourceCulture);
             }
         }
         

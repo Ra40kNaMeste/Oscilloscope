@@ -210,6 +210,9 @@
   <data name="PortStopBitsLabel" xml:space="preserve">
     <value>Stop bits</value>
   </data>
+  <data name="RewindMonochromeButtonContent" xml:space="preserve">
+    <value>Rewind</value>
+  </data>
   <data name="RunMonochromeButtonContent" xml:space="preserve">
     <value>Run only monochromator</value>
   </data>

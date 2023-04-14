@@ -19,7 +19,7 @@ namespace ADC_Control
 {
 
 
-    sealed public class ViewModel:INotifyPropertyChanged, IDisposable
+    sealed public class ViewModel : INotifyPropertyChanged, IDisposable
     {
 
         [DllImport("User32.dll")]
@@ -35,7 +35,7 @@ namespace ADC_Control
 
 
         #region Constructor
-        public ViewModel() 
+        public ViewModel()
         {
             //инициализация компонентов
             Graphs = new();
@@ -62,7 +62,7 @@ namespace ADC_Control
         /// <summary>
         /// Выбранный график
         /// </summary>
-        public PointGraph? SelectGraph 
+        public PointGraph? SelectGraph
         {
             get => selectGraph;
             set
@@ -77,11 +77,11 @@ namespace ADC_Control
         /// </summary>
         public List<PointGraph> Graphs { get; init; }
 
-        private string? selectPort; 
+        private string? selectPort;
         /// <summary>
         /// выбранный порт для связи с АЦП
         /// </summary>
-        public string? SelectPort 
+        public string? SelectPort
         {
             get => selectPort;
             set
@@ -120,11 +120,11 @@ namespace ADC_Control
             }
         }
 
-        private TimeSpan timeConvertation;
+        private string timeConvertation;
         /// <summary>
         /// Время для непрерывной конвертации
         /// </summary>
-        public TimeSpan TimeConvertation
+        public string TimeConvertation
         {
             get => timeConvertation;
             set
@@ -180,7 +180,7 @@ namespace ADC_Control
         /// <summary>
         /// Открыть другой порт
         /// </summary>
-        public UniversalCommand UpdatePortParametersCommand => updatePortParametersCommand ??=new(UpdatePortParameters, CanUpdatePortParameters);
+        public UniversalCommand UpdatePortParametersCommand => updatePortParametersCommand ??= new(UpdatePortParameters, CanUpdatePortParameters);
 
         private UniversalCommand? updateADCPropertiesCommand;
         /// <summary>
@@ -192,7 +192,7 @@ namespace ADC_Control
         /// <summary>
         /// Записать свойства на АЦП модуль
         /// </summary>
-        public UniversalCommand WriteADCPropertiesCommand=> writeADCPropertiesCommand ??= new(WriteADCProperties, CanInvokeADCOperation);
+        public UniversalCommand WriteADCPropertiesCommand => writeADCPropertiesCommand ??= new(WriteADCProperties, CanInvokeADCOperation);
 
 
         private UniversalCommand? testMirrorCommand;
@@ -213,7 +213,7 @@ namespace ADC_Control
             (obj) => isRunningOperation);
 
         private UniversalCommand? calibrationADCInsideCommand;
-        
+
         /// <summary>
         /// Откалибровать АЦП на 0. Выполнять перед измерениями
         /// </summary>
@@ -227,7 +227,7 @@ namespace ADC_Control
         public UniversalCommand CalibrationADCOutsideCommand => calibrationADCOutsideCommand ??= new((obj) => ADC.CalibrationOutside(), CanInvokeADCOperation);
 
         private UniversalCommand? calibrationADCScaleCommand;
-        
+
         /// <summary>
         /// Откалибровать масштаб АЦП
         /// </summary>
@@ -249,6 +249,10 @@ namespace ADC_Control
 
         private UniversalCommand? runMonochromeCommand;
         public UniversalCommand RunMonochromeCommand => runMonochromeCommand ??= new(RunMonochrome, CanInvokeADCOperation);
+
+        private UniversalCommand? rewindMonochromeCommand;
+        public UniversalCommand RewindMonochromeCommand => rewindMonochromeCommand ??= new(RewindMonochrome, CanInvokeADCOperation);
+
         #endregion //Head
 
         #region Body
@@ -308,7 +312,7 @@ namespace ADC_Control
         private void ConvertADCToTime(object? parameter)
         {
 
-            if (short.TryParse(TimeConvertation.TotalMilliseconds.ToString(), out short time))
+            if (short.TryParse(TimeConvertation, out short time))
             {
                 try
                 {
@@ -328,12 +332,23 @@ namespace ADC_Control
 
         private void RunMonochrome(object? parameter)
         {
-            if (short.TryParse(TimeConvertation.TotalMilliseconds.ToString(), out short time))
+            if (ushort.TryParse(TimeConvertation, out ushort time))
             {
                 try
                 {
                     Logger.Info(Resources.LogRunMonochromeStart);
-                    var element = AutomationElement.RootElement.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "Untitled 1 - SignalExpress"));
+                    var elements = AutomationElement.RootElement.FindAll(TreeScope.Children, System.Windows.Automation.Condition.TrueCondition);
+                    AutomationElement? element = null;
+                    foreach (AutomationElement item in elements)
+                    {
+                        if(item.Current.Name.Contains("SignalExpress"))
+                        {
+                            element = item;
+                            break;
+                        }
+
+                    }
+                    if(element == null) { throw new Exception(); }
                     var commandBar = element.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "DockTop"));
                     element.SetFocus();
                     Point pnt = commandBar.Current.BoundingRectangle.Location;
@@ -342,7 +357,7 @@ namespace ADC_Control
                     SetCursorPos((int)x, (int)y);
                     mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
                     mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
-                    x -= 140;
+                    x -= 20;
                     y += 80;
                     SetCursorPos((int)x, (int)y);
                     mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
@@ -355,7 +370,6 @@ namespace ADC_Control
                 catch (Exception)
                 {
 
-                    MessageBox.Show("Упс. что-то пошло не так");
                 }
                 finally
                 {
@@ -364,6 +378,25 @@ namespace ADC_Control
             }
         }
 
+        private void RewindMonochrome(object? parameter)
+        {
+            if (ushort.TryParse(TimeConvertation, out ushort time))
+            {
+                try
+                {
+                    Logger.Info(Resources.LogRewindMonochromeStart);
+                    ADC.RewindMonochrome(time);
+                    Logger.Info(Resources.LogRewindMonochromeFinish);
+                }
+                catch (Exception)
+                {
+                }
+                finally
+                {
+                    isRunningOperation = false;
+                }
+            }
+        }
         public void UpdateADCProperties(object? parameter)
         {
             Logger.Info(Resources.LogReadADCPropertiesStart);
@@ -434,6 +467,7 @@ namespace ADC_Control
             ConvertADCCommand.OnCanExecuteChanged();
             ConvertADCToTimeCommand.OnCanExecuteChanged();
             RunMonochromeCommand.OnCanExecuteChanged();
+            RewindMonochromeCommand.OnCanExecuteChanged();
         }
 
         #endregion //PrivateMethods

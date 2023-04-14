@@ -353,7 +353,7 @@ namespace ADC_Control_Library
             SendMessage(Commands.CalibrationScale, 0);
             LogService?.Write(Resources.LogCalibrationScaleFinish, LogLevels.Info);
         }
-        public void StartMonochrome(short time, CancellationToken token)
+        public void StartMonochrome(ushort time, CancellationToken token)
         {
             if (!Port.IsOpen)
             {
@@ -362,14 +362,18 @@ namespace ADC_Control_Library
             }
             if (!(ADCDataReader is GraphdataFromPortReader))
                 ADCDataReader = new GraphdataFromPortReader();
-            SendMessage(Commands.StartOnlyMonochrome, (uint)time); ;
-            for (int i = 0; i < time; i++)
-            {
-                Thread.Sleep(1);
-                if (token.IsCancellationRequested)
-                    break;
-            }
+            SendMessage(Commands.StartOnlyMonochrome, time); ;
+            //for (int i = 0; i < time; i++)
+            //{
+            //    Thread.Sleep(1);
+            //    if (token.IsCancellationRequested)
+            //        break;
+            //}
             LogService?.Write(Resources.LogStartMonochrome, LogLevels.Info);
+        }
+        public void RewindMonochrome(ushort time)
+        {
+            SendMessage(Commands.RewindMonochrome, time);
         }
 
         #endregion //Commands

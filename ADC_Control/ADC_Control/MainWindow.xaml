@@ -118,9 +118,12 @@
                     <Button Content="{x:Static res:Resources.CalibrationADCOutsideButtonContent}" Command="{Binding CalibrationADCOutsideCommand}"/>
                     <Button Content="{x:Static res:Resources.CalibrationADCScaleButtonContent}" Command="{Binding CalibrationADCScaleCommand}"/>
                     <Button Content="{x:Static res:Resources.ConvertADCButtonContent}" Command="{Binding ConvertADCCommand}"/>
-                    <tools:TimePicker Value="{Binding TimeConvertation, Mode=TwoWay}"/>
+                    <!--<tools:TimePicker Value="{Binding TimeConvertation, Mode=TwoWay}"/>-->
+                    <TextBox Text="{Binding TimeConvertation}"/>
                     <Button Content="{x:Static res:Resources.ConvertToTimeADCButtonContent}" Command="{Binding ConvertADCToTimeCommand}"/>
                     <Button Content="{x:Static res:Resources.RunMonochromeButtonContent}" Command="{Binding RunMonochromeCommand}"/>
+                    <Button Content="{x:Static res:Resources.RewindMonochromeButtonContent}" Command="{Binding RewindMonochromeCommand}"/>
+
                     <Button Content="{x:Static res:Resources.CancelADCOperationButtonContent}" Command="{Binding CancelADCOperationCommand}"/>
 
                     <Line X1="0" Y1="0" X2="1" Y2="0" Stretch="Fill" Style="{DynamicResource delimiterLineStyle}"/>

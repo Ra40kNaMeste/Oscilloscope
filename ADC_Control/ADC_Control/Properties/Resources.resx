@@ -180,6 +180,12 @@
   <data name="LogReadADCPropertiesStart" xml:space="preserve">
     <value>Start read propertties from ADC</value>
   </data>
+  <data name="LogRewindMonochromeFinish" xml:space="preserve">
+    <value>Rewinded successfully</value>
+  </data>
+  <data name="LogRewindMonochromeStart" xml:space="preserve">
+    <value>Rewind start</value>
+  </data>
   <data name="LogRunMonochromeFinish" xml:space="preserve">
     <value>Run monochrome successfully</value>
   </data>

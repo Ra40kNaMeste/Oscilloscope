@@ -102,7 +102,7 @@ int32_t summ;
 int8_t count;
 
 int8_t CAN_CONVERTATION = 0x00;
-uint16_t time_convert = 0;
+uint32_t time_convert = 0;
 uint8_t rx_buffer[4];
 uint8_t props_buffer[30];
 /* USER CODE END PD */
@@ -130,7 +130,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 void ADC_Reset();
-void ADC_Convert(uint8_t time1, uint8_t time2);
+void ADC_Convert();
 void ADC_One_Measure_Convert();
 void ADC_Self_Offset_Calibration();
 void ADC_System_Offset_Calibration();
@@ -310,7 +310,7 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 7999;
+  htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 65535;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -474,6 +474,14 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(htim == &htim2)
+	{
+		time_convert++;
+	}
+}
+
 void START_MONOCHROME()
 {
 	HAL_GPIO_WritePin(MONOCHROME_GPIO, MONOCHROME_REWIND_PIN , GPIO_PIN_RESET);
@@ -624,20 +632,19 @@ int8_t ADC_READ_Bytes_By_Mask_From_Register(uint8_t adress, uint8_t offset, uint
 	return res;
 }
 
-void ADC_Convert(uint8_t time1, uint8_t time2)
+void ADC_Convert()
 {
 	ADC_APPEND_Byte_To_Register(ADC_REGISTER_MODE0, 0x40, 0);
 	
 	TIM2->CNT = 0;
 	summ = 0;
 	count = 0;
-	HAL_TIM_Base_Start_IT(&htim2);
+	time_convert = 0;
 	START_MONOCHROME();
+	HAL_TIM_Base_Start_IT(&htim2);
 	ADC_Start_By_Pin();
 	int i = 0;
-	for(i = 0; i<time1; i++)
-	{
-		while(TIM2->CNT < 255 && !CAN_CONVERTATION)
+		while(!CAN_CONVERTATION)
 		{
 			if(!HAL_GPIO_ReadPin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_DRDY))
 			{
@@ -653,71 +660,61 @@ void ADC_Convert(uint8_t time1, uint8_t time2)
 				{
 					CanTranspData = 0;
 					HAL_UART_Transmit_IT(&huart1, &dates[0], 4);
-					//GG
 				}
 				HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET);
 			}
-		}
 	}
-	while(TIM2->CNT < time2 && !CAN_CONVERTATION)
-	{
-		if(!HAL_GPIO_ReadPin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_DRDY))
-		{
-			HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_RESET);
-			uint8_t status = ADC_Read_Byte();
-			uint8_t dates[4];
-			dates[0] = ADC_Read_Byte();
-			dates[1] = ADC_Read_Byte();
-			dates[2] = ADC_Read_Byte();
-			dates[3] = ADC_Read_Byte();
-			int8_t optional = ADC_Read_Byte();
-			if(CanTranspData)
-			{
-				CanTranspData = 0;
-				HAL_UART_Transmit_IT(&huart1, &dates[0], 4);
-				//GG
-			}
-			HAL_GPIO_WritePin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_CS, GPIO_PIN_SET);
-		}
-	}
-
-	HAL_TIM_Base_Stop_IT(&htim2);
 	ADC_Stop_By_Pin();
 	STOP_MONOCHROME();
-
+	HAL_TIM_Base_Stop_IT(&htim2);
 }
 
-void RunMonochrome(uint16_t time)
+void RunMonochrome()
 {
 	
 	TIM2->CNT = 0;
-	HAL_TIM_Base_Start_IT(&htim2);
+	time_convert = 0;
 	START_MONOCHROME();
 	HAL_TIM_Base_Start_IT(&htim2);
-	while(TIM2->CNT < time && !CAN_CONVERTATION)
+	while(!CAN_CONVERTATION)
 	{
 		
 	}
-	HAL_TIM_Base_Stop_IT(&htim2);
 	STOP_MONOCHROME();
-
-	time_convert = TIM2->CNT;
+	HAL_TIM_Base_Stop_IT(&htim2);
 }
-
-void REWIND(int16_t time)
+void RunMonochromeByTimeConvert()
 {
 	TIM2->CNT = 0;
+	uint32_t old_time = time_convert;
+	time_convert = 0;
+	START_MONOCHROME();
 	HAL_TIM_Base_Start_IT(&htim2);
-	REWIND_MONOCHROME();
-	HAL_TIM_Base_Start_IT(&htim2);
-	while(TIM2->CNT < time && !CAN_CONVERTATION)
+	while(time_convert < old_time && !CAN_CONVERTATION)
 	{
 		
 	}
-	HAL_TIM_Base_Stop_IT(&htim2);
 	STOP_MONOCHROME();
+	HAL_TIM_Base_Stop_IT(&htim2);
+	time_convert = 0;
+}
 
-	time_convert = TIM2->CNT;
+
+void REWIND()
+{
+	TIM2->CNT = 0;
+	uint32_t old_time = time_convert;
+	time_convert = 0;
+	
+	START_MONOCHROME();
+	HAL_TIM_Base_Start_IT(&htim2);
+	while(old_time < time_convert && !CAN_CONVERTATION)
+	{
+		
+	}
+	STOP_MONOCHROME();
+	HAL_TIM_Base_Stop_IT(&htim2);
+	time_convert = 0;
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
@@ -1077,6 +1074,7 @@ void ADC_SET_DAT(int8_t value)
 
 int8_t GetADCPropertySwitch(uint8_t index)
 {
+	
 	switch(index)
 		{
 		case 0:
@@ -1209,7 +1207,9 @@ void SetADCPropertySwitch(uint8_t index, int8_t value)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
+	CAN_CONVERTATION = 0x01;
 	Convert_Input_Data(rx_buffer);
+	CAN_CONVERTATION = 0x00;
 	HAL_UART_Receive_IT(&huart1, rx_buffer, 4);
 }
 
@@ -1233,7 +1233,7 @@ void Convert_Input_Data(uint8_t* data)
 		case 2:
 		{
 
-			ADC_Convert(data[2], data[3]);
+			ADC_Convert();
 			break;
 		}
 		case 3:
@@ -1298,14 +1298,17 @@ void Convert_Input_Data(uint8_t* data)
 		}
 		case 12:
 		{
-			int16_t* temp = &data[2];
-			REWIND(*temp);
+			REWIND();
 			break;
 		}
 		case 13:
 		{
-			int16_t* temp = &data[2];
-			RunMonochrome(*temp);
+			RunMonochrome();
+			break;
+		}
+		case 14:
+		{
+			
 			break;
 		}
 	}

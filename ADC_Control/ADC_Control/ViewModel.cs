@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO.Ports;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -17,8 +18,11 @@ using InteractiveDataDisplay.WPF;
 
 namespace ADC_Control
 {
+    [AttributeUsage(AttributeTargets.Property)]
+    class CommandCanExecudeUpdateByPropertyChangedAttribute:Attribute
+    {
 
-
+    }
     sealed public class ViewModel : INotifyPropertyChanged, IDisposable
     {
 
@@ -43,6 +47,8 @@ namespace ADC_Control
             SettingPortVM = new();
             tokenSource = new();
             Logger = NLog.LogManager.GetCurrentClassLogger();
+            UpdatedCommands = new();
+            FillUpdatedCommands();
 
             //"Привязка" к изменению свойств
             SettingPortVM.PropertyChanged += (sender, e) => UpdatePortCommand();
@@ -50,9 +56,20 @@ namespace ADC_Control
             ADC.PropertyChanged += (sender, e) => UpdatePortCommand();
             ADC.PropertyChanged += CallPropertyChangedByGraphs;
             PropertyChanged += (sender, e) => UpdatePortCommand();
+
         }
 
-
+        private void FillUpdatedCommands()
+        {
+            var t = GetType();
+            var props = t.GetProperties();
+            foreach (var prop in props)
+            {
+                if (prop.GetCustomAttribute<CommandCanExecudeUpdateByPropertyChangedAttribute>() != null &&
+                    prop.GetValue(this) is UniversalCommand command)
+                    UpdatedCommands.Add(command);
+            }
+        }
 
         #endregion //Constructor
 
@@ -179,24 +196,28 @@ namespace ADC_Control
         public UniversalCommand UpdatePortsCommand => updatePortsCommand ??= new(UpdatePorts);
 
         private UniversalCommand? openPortCommand;
+        [CommandCanExecudeUpdateByPropertyChanged]
         /// <summary>
         /// Открыть порт для связи
         /// </summary>
         public UniversalCommand OpenPortCommand => openPortCommand ??= new(OpenPort, CanOpenPort);
 
         private UniversalCommand? closePortCommand;
+        [CommandCanExecudeUpdateByPropertyChanged]
         /// <summary>
         /// Закрыть порт
         /// </summary>
         public UniversalCommand ClosePortCommand => closePortCommand ??= new(ClosePort, CanClosePort);
 
         private UniversalCommand? updatePortParametersCommand;
+        [CommandCanExecudeUpdateByPropertyChanged]
         /// <summary>
         /// Открыть другой порт
         /// </summary>
         public UniversalCommand UpdatePortParametersCommand => updatePortParametersCommand ??= new(UpdatePortParameters, CanUpdatePortParameters);
 
         private UniversalCommand? updateADCPropertiesCommand;
+        [CommandCanExecudeUpdateByPropertyChanged]
         /// <summary>
         /// Считать свойства с АЦП модуля
         /// </summary>
@@ -210,6 +231,7 @@ namespace ADC_Control
 
 
         private UniversalCommand? testMirrorCommand;
+        [CommandCanExecudeUpdateByPropertyChanged]
         /// <summary>
         /// Проверить связь с микроконтроллером
         /// </summary>
@@ -226,43 +248,46 @@ namespace ADC_Control
             (obj) => IsRunningOperation);
 
         private UniversalCommand? calibrationADCInsideCommand;
-
+        [CommandCanExecudeUpdateByPropertyChanged]
         /// <summary>
         /// Откалибровать АЦП на 0. Выполнять перед измерениями
         /// </summary>
         public UniversalCommand CalibrationADCInsideCommand => calibrationADCInsideCommand ??= new((obj) => ADC.CalibrationInside(), CanInvokeADCOperation);
 
         private UniversalCommand? calibrationADCOutsideCommand;
-
+        [CommandCanExecudeUpdateByPropertyChanged]
         /// <summary>
         /// Откалибровать АЦП с учётом проводов. Выполнять при КЗ
         /// </summary>
         public UniversalCommand CalibrationADCOutsideCommand => calibrationADCOutsideCommand ??= new((obj) => ADC.CalibrationOutside(), CanInvokeADCOperation);
 
         private UniversalCommand? calibrationADCScaleCommand;
-
+        [CommandCanExecudeUpdateByPropertyChanged]
         /// <summary>
         /// Откалибровать масштаб АЦП
         /// </summary>
         public UniversalCommand CalibrationADCScaleCommand => calibrationADCScaleCommand ??= new((obj) => ADC.CalibrationScale(), CanInvokeADCOperation);
 
         private UniversalCommand? convertADCCommand;
-
+        [CommandCanExecudeUpdateByPropertyChanged]
         /// <summary>
         /// Конвертирует 1 значение сигнала
         /// </summary>
         public UniversalCommand ConvertADCCommand => convertADCCommand ??= new(ConvertValueADC, CanInvokeADCOperation);
 
         private UniversalCommand? convertADCToTimeCommand;
+        [CommandCanExecudeUpdateByPropertyChanged]
         /// <summary>
         /// Конвертирует по времени в график
         /// </summary>
         public UniversalCommand ConvertADCToTimeCommand => convertADCToTimeCommand ??= new(ConvertADCToTime, CanInvokeADCOperation);
 
         private UniversalCommand? runMonochromeCommand;
+        [CommandCanExecudeUpdateByPropertyChanged]
         public UniversalCommand RunMonochromeCommand => runMonochromeCommand ??= new(RunMonochrome, CanInvokeADCOperation);
 
         private UniversalCommand? rewindMonochromeCommand;
+        [CommandCanExecudeUpdateByPropertyChanged]
         public UniversalCommand RewindMonochromeCommand => rewindMonochromeCommand ??= new(RewindMonochrome, CanInvokeADCOperation);
 
         #endregion //Head
@@ -467,12 +492,6 @@ namespace ADC_Control
             return tokenSource.Token;
         }
 
-        private void WriteStringInConsole(string message)
-        {
-            Console.Append(message);
-            OnPropertyChanged("Console");
-        }
-
         private void OnADCPropertiesChanged() => OnPropertyChanged("ADCProperties");
 
         private void ClosePortIfSelectPortChanged(object? sender, PropertyChangedEventArgs e)
@@ -486,22 +505,27 @@ namespace ADC_Control
             OnPropertyChanged("Graphs");
         }
 
+        private List<UniversalCommand> UpdatedCommands { get; init; }
         private void UpdatePortCommand()
         {
-            UpdatePortParametersCommand.OnCanExecuteChanged();
-            OpenPortCommand.OnCanExecuteChanged();
-            ClosePortCommand.OnCanExecuteChanged();
-            UpdatePortParametersCommand.OnCanExecuteChanged();
+            foreach (var command in UpdatedCommands)
+            {
+                command.OnCanExecuteChanged();
+            }
+            //UpdatePortParametersCommand.OnCanExecuteChanged();
+            //OpenPortCommand.OnCanExecuteChanged();
+            //ClosePortCommand.OnCanExecuteChanged();
+            //UpdatePortParametersCommand.OnCanExecuteChanged();
 
-            TestMirrorCommand.OnCanExecuteChanged();
-            CalibrationADCInsideCommand.OnCanExecuteChanged();
-            CalibrationADCOutsideCommand.OnCanExecuteChanged();
-            CalibrationADCScaleCommand.OnCanExecuteChanged();
+            //TestMirrorCommand.OnCanExecuteChanged();
+            //CalibrationADCInsideCommand.OnCanExecuteChanged();
+            //CalibrationADCOutsideCommand.OnCanExecuteChanged();
+            //CalibrationADCScaleCommand.OnCanExecuteChanged();
 
-            ConvertADCCommand.OnCanExecuteChanged();
-            ConvertADCToTimeCommand.OnCanExecuteChanged();
-            RunMonochromeCommand.OnCanExecuteChanged();
-            RewindMonochromeCommand.OnCanExecuteChanged();
+            //ConvertADCCommand.OnCanExecuteChanged();
+            //ConvertADCToTimeCommand.OnCanExecuteChanged();
+            //RunMonochromeCommand.OnCanExecuteChanged();
+            //RewindMonochromeCommand.OnCanExecuteChanged();
         }
 
         #endregion //PrivateMethods

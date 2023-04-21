@@ -205,6 +205,15 @@ namespace ADC_Control.Properties {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на .
+        /// </summary>
+        public static string LogFinishCoonvertValue {
+            get {
+                return ResourceManager.GetString("LogFinishCoonvertValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Not successfully open port {0}.
         /// </summary>
         public static string LogOpenPortError {
@@ -291,6 +300,15 @@ namespace ADC_Control.Properties {
         public static string LogStartConvertGraph {
             get {
                 return ResourceManager.GetString("LogStartConvertGraph", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Start convert value.
+        /// </summary>
+        public static string LogStartConvertValue {
+            get {
+                return ResourceManager.GetString("LogStartConvertValue", resourceCulture);
             }
         }
         

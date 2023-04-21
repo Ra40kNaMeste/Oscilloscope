@@ -286,6 +286,15 @@ namespace ADC_Control_Library.Properties {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Mirror test failed: timeout.
+        /// </summary>
+        internal static string LogTestMirrorFailedTestByTimeout {
+            get {
+                return ResourceManager.GetString("LogTestMirrorFailedTestByTimeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Receive data {0} from ADC.
         /// </summary>
         internal static string LogTestMirrorReceived {

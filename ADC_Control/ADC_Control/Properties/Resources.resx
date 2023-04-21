@@ -165,6 +165,9 @@
   <data name="LogErrorConvertGraph" xml:space="preserve">
     <value>Error measure</value>
   </data>
+  <data name="LogFinishCoonvertValue" xml:space="preserve">
+    <value />
+  </data>
   <data name="LogOpenPortError" xml:space="preserve">
     <value>Not successfully open port {0}</value>
   </data>
@@ -194,6 +197,9 @@
   </data>
   <data name="LogStartConvertGraph" xml:space="preserve">
     <value>Start measure by ADC</value>
+  </data>
+  <data name="LogStartConvertValue" xml:space="preserve">
+    <value>Start convert value</value>
   </data>
   <data name="LogWriteADCPropertiesFinish" xml:space="preserve">
     <value>Writed proprerties to ADC</value>

@@ -192,6 +192,9 @@
   <data name="LogStartReadDataPort" xml:space="preserve">
     <value />
   </data>
+  <data name="LogTestMirrorFailedTestByTimeout" xml:space="preserve">
+    <value>Mirror test failed: timeout</value>
+  </data>
   <data name="LogTestMirrorReceived" xml:space="preserve">
     <value>Receive data {0} from ADC</value>
   </data>

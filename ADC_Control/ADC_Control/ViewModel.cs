@@ -58,6 +58,20 @@ namespace ADC_Control
 
         #region VisualProperties
 
+        private bool isRunningOperation;
+        /// <summary>
+        /// Выполняется ли опреция АЦП
+        /// </summary>
+        public bool IsRunningOperation
+        {
+            get => isRunningOperation;
+            set
+            {
+                isRunningOperation = value;
+                OnPropertyChanged();
+            }
+        }
+
         private PointGraph? selectGraph;
         /// <summary>
         /// Выбранный график
@@ -199,8 +213,7 @@ namespace ADC_Control
         /// <summary>
         /// Проверить связь с микроконтроллером
         /// </summary>
-        public UniversalCommand TestMirrorCommand => testMirrorCommand ??= new(
-            (obj) => IsMirrorTest = ADC.TestMirror(10, GetToken()),
+        public UniversalCommand TestMirrorCommand => testMirrorCommand ??= new(TestMirrorAsync,
             (obj) => SelectPort != null && !ADC.Port.IsOpen);
 
         private UniversalCommand? cancelADCOpertaionCommand;
@@ -209,8 +222,8 @@ namespace ADC_Control
         /// Отменить выполняемую операцию
         /// </summary>
         public UniversalCommand CancelADCOpertaionCommand => cancelADCOpertaionCommand ??= new(
-            (obj) => { tokenSource.Cancel(); isRunningOperation = false; },
-            (obj) => isRunningOperation);
+            (obj) => { tokenSource.Cancel(); IsRunningOperation = false; },
+            (obj) => IsRunningOperation);
 
         private UniversalCommand? calibrationADCInsideCommand;
 
@@ -238,8 +251,7 @@ namespace ADC_Control
         /// <summary>
         /// Конвертирует 1 значение сигнала
         /// </summary>
-        public UniversalCommand ConvertADCCommand => convertADCCommand ??= new(
-            (obj) => WriteStringInConsole(string.Format(ADC.Convert(GetToken()).ToString())), CanInvokeADCOperation);
+        public UniversalCommand ConvertADCCommand => convertADCCommand ??= new(ConvertValueADC, CanInvokeADCOperation);
 
         private UniversalCommand? convertADCToTimeCommand;
         /// <summary>
@@ -261,7 +273,7 @@ namespace ADC_Control
             ADC.UpdatePorts();
         }
         private bool CanOpenPort(object? parameter) => SelectPort != null && !ADC.Port.IsOpen && SettingPortVM.StopBits != StopBits.None;
-        private void OpenPort(object? parameter)
+        private async void OpenPort(object? parameter)
         {
             try
             {
@@ -274,16 +286,22 @@ namespace ADC_Control
                 SettingPortVM.ResetChangedProperties();
                 ADC.Port.Open();
                 UpdatePortCommand();
-                IsMirrorTest = ADC.TestMirror(10, GetToken());
+                IsMirrorTest = await ADC.RunTestMirrorAsync(new TimeSpan(0, 1, 30), GetToken());
                 if (IsMirrorTest == true)
                     UpdateADCProperties(null);
                 Logger.Info(string.Format(Resources.LogClosePortFinish, SelectPort));
-                isRunningOperation = false;
+                IsRunningOperation = false;
             }
             catch (Exception)
             {
                 Logger.Error(string.Format(Resources.LogOpenPortError, SelectPort));
             }
+        }
+
+
+        private async void TestMirrorAsync(object? parameter)
+        {
+            await ADC.RunTestMirrorAsync(new(0, 0, 10), GetToken());
         }
 
         private bool CanClosePort(object? parameter) => SelectPort != null && ADC.Port.IsOpen;
@@ -309,7 +327,22 @@ namespace ADC_Control
             return ADC.Port.IsOpen && IsMirrorTest == true;
         }
 
-        private void ConvertADCToTime(object? parameter)
+        private async void ConvertValueADC(object? parameter)
+        {
+            try
+            {
+                Logger.Info(Resources.LogStartConvertValue);
+                var res = await ADC.ConvertAsync(GetToken());
+                MessageBox.Show(res.ToString());
+                Logger.Info(Resources.LogFinishCoonvertValue);
+            }
+            catch (Exception)
+            {
+
+            }
+        }
+
+        private async void ConvertADCToTime(object? parameter)
         {
 
             if (short.TryParse(TimeConvertation, out short time))
@@ -317,9 +350,10 @@ namespace ADC_Control
                 try
                 {
                     Logger.Info(Resources.LogStartConvertGraph);
-                    var result = ADC.ConvertToTime(time, GetToken());
+
+                    var result = await ADC.ConvertToTimeAsync(new(0, 0, 0, time), GetToken());
                     Logger.Info(Resources.LogEndConvertGraph);
-                    isRunningOperation = false;
+                    IsRunningOperation = false;
 
                 }
                 catch (Exception)
@@ -330,7 +364,7 @@ namespace ADC_Control
             }
         }
 
-        private void RunMonochrome(object? parameter)
+        private async void RunMonochrome(object? parameter)
         {
             if (ushort.TryParse(TimeConvertation, out ushort time))
             {
@@ -341,14 +375,14 @@ namespace ADC_Control
                     AutomationElement? element = null;
                     foreach (AutomationElement item in elements)
                     {
-                        if(item.Current.Name.Contains("SignalExpress"))
+                        if (item.Current.Name.Contains("SignalExpress"))
                         {
                             element = item;
                             break;
                         }
 
                     }
-                    if(element == null) { throw new Exception(); }
+                    if (element == null) { throw new Exception(); }
                     var commandBar = element.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "DockTop"));
                     element.SetFocus();
                     Point pnt = commandBar.Current.BoundingRectangle.Location;
@@ -364,7 +398,7 @@ namespace ADC_Control
                     mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
 
 
-                    ADC.StartMonochrome(time, GetToken());
+                    await ADC.StartByTimeMonochromeAsync(new(0, 0, 0, time), GetToken());
                     Logger.Info(Resources.LogRunMonochromeFinish);
                 }
                 catch (Exception)
@@ -373,19 +407,19 @@ namespace ADC_Control
                 }
                 finally
                 {
-                    isRunningOperation = false;
+                    IsRunningOperation = false;
                 }
             }
         }
 
-        private void RewindMonochrome(object? parameter)
+        private async void RewindMonochrome(object? parameter)
         {
             if (ushort.TryParse(TimeConvertation, out ushort time))
             {
                 try
                 {
                     Logger.Info(Resources.LogRewindMonochromeStart);
-                    ADC.RewindMonochrome(time);
+                    await ADC.RewindByTimeMonochromeAsync(new(0, 0, 0, time), GetToken());
                     Logger.Info(Resources.LogRewindMonochromeFinish);
                 }
                 catch (Exception)
@@ -393,22 +427,22 @@ namespace ADC_Control
                 }
                 finally
                 {
-                    isRunningOperation = false;
+                    IsRunningOperation = false;
                 }
             }
         }
-        public void UpdateADCProperties(object? parameter)
+        public async void UpdateADCProperties(object? parameter)
         {
             Logger.Info(Resources.LogReadADCPropertiesStart);
-            ADC.UpdateFromADCProperties();
+            await ADC.UpdateFromADCPropertiesAsync();
             Logger.Info(Resources.LogReadADCPropertiesFinish);
             OnADCPropertiesChanged();
         }
 
-        public void WriteADCProperties(object? parameter)
+        public async void WriteADCProperties(object? parameter)
         {
             Logger.Info(Resources.LogWriteADCPropertiesStart);
-            ADC.WriteToADCProperties();
+            await ADC.WriteToADCPropertiesAsync();
             Logger.Info(Resources.LogWriteADCPropertiesFinish);
         }
 
@@ -418,7 +452,7 @@ namespace ADC_Control
 
         #region PrivateProperties
 
-        private bool isRunningOperation = false;
+
         private CancellationTokenSource tokenSource;
         private ADCManager ADC { get; init; }
 
@@ -429,7 +463,7 @@ namespace ADC_Control
 
         private CancellationToken GetToken()
         {
-            isRunningOperation = true;
+            IsRunningOperation = true;
             return tokenSource.Token;
         }
 

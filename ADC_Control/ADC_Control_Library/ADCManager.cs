@@ -27,9 +27,10 @@ namespace ADC_Control_Library
         ReadAllPropertiesADC = 8,
         ReadPropertyAdc = 9,
         SetProperty = 10,
-        CancelConvert = 11,
+        Cancel = 11,
         RewindMonochrome = 12,
-        StartOnlyMonochrome = 13
+        StartOnlyMonochrome = 13,
+        RewindToTimeMonochrome = 14
     }
     public sealed class ADCManager : INotifyPropertyChanged, IDisposable
     {
@@ -212,172 +213,383 @@ namespace ADC_Control_Library
         #endregion //SettingUARTPort
 
         #region Commands
+        /// <summary>
+        /// Обновить доступные порты
+        /// </summary>
         public void UpdatePorts()
         {
             Ports = SerialPort.GetPortNames().ToList();
         }
-        public bool TestMirror(ushort value, CancellationToken token)
+        /// <summary>
+        /// Тест на ответ порта
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public bool RunTestMirror(TimeSpan timeout, CancellationToken token)
         {
-            try
+            Random rand = new();
+            ushort value = (ushort)rand.Next();
+            lock (portLocker)
             {
-                if (!Port.IsOpen)
-                {
-                    LogService?.Write(Resources.LogErrorOpenPort, LogLevels.Error);
-                    throw new PortClosedException();
-                }
                 LogService?.Write(string.Format(Resources.LogTestMirrorSend, value), LogLevels.Info);
-
-                ADCDataReader = new Int32DataFromPortReader();
+                if (!(ADCDataReader is Int32DataFromPortReader))
+                    ADCDataReader = new Int32DataFromPortReader();
                 var task = ADCDataReader.Read(Port, token);
                 task.Start();
                 SendMessage(Commands.TestMirror, value);
-                task.Wait();
+                try
+                {
+                    task.WaitAsync(timeout);
+                    task.Wait();
+                }
+                catch (TimeoutException)
+                {
+                    LogService?.Write(Resources.LogTestMirrorFailedTestByTimeout, LogLevels.Info);
+                    return false;
+                }
                 int res = (int)task.Result >> 16;
                 LogService?.Write(string.Format(Resources.LogTestMirrorReceived, res), LogLevels.Info);
                 return res == value;
             }
-            catch (TimeoutException)
-            {
-                return false;
-            }
-            catch (Exception)
-            {
 
-                throw;
-            }
+        }
 
+        public async Task<bool> RunTestMirrorAsync(TimeSpan timeout, CancellationToken token)
+        {
+            bool res = false;
+            await Task.Run(() => { res = RunTestMirror(timeout, token); });
+            return res;
         }
 
         public void Reset()
         {
-            LogService?.Write(Resources.LogResetStart, LogLevels.Info);
-            SendMessage(Commands.Reset, 0);
-            LogService?.Write(Resources.LogResetFinish, LogLevels.Info);
+            lock (portLocker)
+            {
+                LogService?.Write(Resources.LogResetStart, LogLevels.Info);
+                SendMessage(Commands.Reset, 0);
+                LogService?.Write(Resources.LogResetFinish, LogLevels.Info);
+            }
+
         }
-        public async Task<List<Point>> ConvertToTimeAsync(short time, CancellationToken token)
+
+        /// <summary>
+        /// Конвертация массива значений в течении некоторого времени
+        /// </summary>
+        /// <param name="time">Время конвертации</param>
+        /// <param name="token">Токен отмены</param>
+        /// <returns>Массив значений</returns>
+        public async Task<List<Point>> ConvertToTimeAsync(TimeOnly time, CancellationToken token)
         {
             Task<List<Point>> task = new(() => ConvertToTime(time, token));
             await task;
             return task.Result;
         }
-        public List<Point> ConvertToTime(short time, CancellationToken token)
+
+        /// <summary>
+        /// Конвертация массива значений в течении некоторого времени
+        /// </summary>
+        /// <param name="time">Время конвертации</param>
+        /// <returns>Массив значений</returns>
+        public async Task<List<Point>> ConvertToTimeAsync(TimeOnly time)
         {
-            LogService?.Write(Resources.LogConvertStart, LogLevels.Info);
-            if (!Port.IsOpen)
-            {
-                LogService?.Write(Resources.LogErrorOpenPort, LogLevels.Error);
-                throw new PortClosedException();
-            }
-            using CancellationTokenSource source = new();
-            if (!(ADCDataReader is GraphdataFromPortReader))
-                ADCDataReader = new GraphdataFromPortReader();
-            SendMessage(Commands.ConvertToTime, (uint)time);
-            Task<List<Point>> task = ConvertGraphAsync(source.Token);
-            task.Start();
-            for (int i = 0; i < time; i++)
-            {
-                Thread.Sleep(1);
-                if (token.IsCancellationRequested)
-                    break;
-            }
-            source.Cancel();
-            task.Wait();
-            LogService?.Write(Resources.LogConvertFinish, LogLevels.Info);
+            Task<List<Point>> task = new(() => ConvertToTime(time));
+            await task;
             return task.Result;
         }
 
+        /// <summary>
+        /// Конвертация массива значений в течении некоторого времени
+        /// </summary>
+        /// <param name="time">Время конвертции</param>
+        /// <returns>Массив значений</returns>
+        public List<Point> ConvertToTime(TimeOnly time)
+        {
+            using CancellationTokenSource source = new();
+            return ConvertToTime(time, source.Token);
+        }
+        /// <summary>
+        /// Конвертация массива значений в течении некоторого времени
+        /// </summary>
+        /// <param name="time">Время конвертации</param>
+        /// <param name="token">Токен отвемы</param>
+        /// <returns>Сконвертированный график</returns>
+        private List<Point> ConvertToTime(TimeOnly time, CancellationToken token)
+        {
+            lock (portLocker)
+            {
+                if (!(ADCDataReader is GraphdataFromPortReader))
+                    ADCDataReader = new GraphdataFromPortReader();
+
+                //Фабрика токенов для чтения графиков
+                using CancellationTokenSource source = new();
+
+                //задача снятия графика
+                var task = ADCDataReader.Read(Port, source.Token);
+
+                //задача по времени
+                Task timeTask = Task.Delay(time.Millisecond, token);
+                //Запуск приёма данных
+                task.Start();
+                //Дать команду на ковертацию АЦП
+                SendMessage(Commands.ConvertToTime);
+                //Запуск таймера
+                timeTask.Start();
+                //Ждём таймер. Он закончится когда выйдет время или будет отмена
+                timeTask.Wait();
+                //Подаём команду на отмену конвертации
+                SendMessage(Commands.Cancel);
+                //Подаём сигнал на закрытие порта передачи
+                source.Cancel();
+                //Ждём закрытия
+                task.Wait();
+                LogService?.Write(Resources.LogConvertFinish, LogLevels.Info);
+                return (List<Point>)task.Result;
+            }
+        }
+
+        /// <summary>
+        /// Обновление значений свойств АЦП
+        /// </summary>
+        public async Task UpdateFromADCPropertiesAsync()
+        {
+            await Task.Run(UpdateFromADCProperties);
+        }
+
+        /// <summary>
+        /// Обновление значений свойств АЦП
+        /// </summary>
         public void UpdateFromADCProperties()
         {
-            LogService?.Write(Resources.LogUpdateFromADCPropertiesStart, LogLevels.Info);
-            SendMessage(Commands.ReadAllPropertiesADC, 0);
-            var ADCprops = ReadPropertiesFromADC();
-            LogService?.Write(Resources.LogComparerADCPropertiesStart, LogLevels.Debug);
-            foreach (var item in ADCprops)
+            lock (portLocker)
             {
-                var property = ADCProperties.Where(i => i.Property == item.Item1).First();
-                property.SelectValue = property.ConvertCodeToValue((byte)item.Item2);
+                LogService?.Write(Resources.LogUpdateFromADCPropertiesStart, LogLevels.Info);
+
+                var task = new Task<IEnumerable<(ADCProperty, int)>>(() => ReadByteAsPropertiesADCByPort());
+                task.Start();
+                SendMessage(Commands.ReadAllPropertiesADC);
+                task.Wait();
+                LogService?.Write(Resources.LogComparerADCPropertiesStart, LogLevels.Debug);
+                var ADCprops = task.Result;
+                foreach (var item in ADCprops)
+                {
+                    var property = ADCProperties.Where(i => i.Property == item.Item1).First();
+                    property.SelectValue = property.ConvertCodeToValue((byte)item.Item2);
+                }
+                LogService?.Write(Resources.LogComparerADCPropertiesFinish, LogLevels.Debug);
+                LogService?.Write(Resources.LogUpdateFromADCPropertiesFinish, LogLevels.Info);
             }
-            LogService?.Write(Resources.LogComparerADCPropertiesFinish, LogLevels.Debug);
-            LogService?.Write(Resources.LogUpdateFromADCPropertiesFinish, LogLevels.Info);
         }
+
+        /// <summary>
+        /// Запись всех изменённх свойств по АЦП
+        /// </summary>
+        public async Task WriteToADCPropertiesAsync()
+        {
+            await Task.Run(WriteToADCProperties);
+        }
+
+        /// <summary>
+        /// Запись всех изменённх свойств по АЦП
+        /// </summary>
         public void WriteToADCProperties()
         {
-            LogService?.Write(Resources.LogWritePropertiesStart, LogLevels.Info);
-            if (!Port.IsOpen)
+            lock (portLocker)
             {
-                LogService?.Write(Resources.LogErrorOpenPort, LogLevels.Error);
-                throw new PortClosedException();
-            }
-            var ADCProps = ReadPropertiesFromADC();
+                LogService?.Write(Resources.LogWritePropertiesStart, LogLevels.Info);
+                var ADCProps = ReadByteAsPropertiesADCByPort();
 
-            var propsForWrite = ADCProperties.Where(i => i.SelectValue != null &&
-                ADCProps.Where(j => j.Item1 == i.Property).First().Item2 != i.ConvertValueToCode(i.SelectValue));
-            LogService?.Write(string.Format(Resources.LogWriteCountChangedPorperties, propsForWrite.Count()), LogLevels.Debug);
-            foreach (var item in propsForWrite)
-            {
-                LogService?.Write(string.Format(Resources.LogWritePropertyStart, item.Property.ToString()), LogLevels.Trace);
-                SendMessage(Commands.SetProperty, item.ConvertValueToCode(item.SelectValue!));
-                LogService?.Write(string.Format(Resources.LogWritePorpertyFinish, item.Property.ToString()), LogLevels.Trace);
+                var propsForWrite = ADCProperties.Where(i => i.SelectValue != null &&
+                    ADCProps.Where(j => j.Item1 == i.Property).First().Item2 != i.ConvertValueToCode(i.SelectValue));
+                LogService?.Write(string.Format(Resources.LogWriteCountChangedPorperties, propsForWrite.Count()), LogLevels.Debug);
+                foreach (var item in propsForWrite)
+                {
+                    LogService?.Write(string.Format(Resources.LogWritePropertyStart, item.Property.ToString()), LogLevels.Trace);
+                    SendMessage(Commands.SetProperty, item.ConvertValueToCode(item.SelectValue!));
+                    LogService?.Write(string.Format(Resources.LogWritePorpertyFinish, item.Property.ToString()), LogLevels.Trace);
+                }
+                LogService?.Write(Resources.LogWriteProperiesFinish, LogLevels.Info);
             }
-            LogService?.Write(Resources.LogWriteProperiesFinish, LogLevels.Info);
         }
+
+        /// <summary>
+        /// Конертация одного значения
+        /// </summary>
+        /// <param name="token">Токен отмены</param>
+        /// <returns>Значение</returns>
+        public async Task<int> ConvertAsync(CancellationToken token)
+        {
+            var task = new Task<int>(()=> Convert(token));
+            await task;
+            return task.Result;
+        }
+
+        /// <summary>
+        /// Конертация одного значения
+        /// </summary>
+        /// <param name="token">Токен отмены</param>
+        /// <returns>Значение</returns>
         public int Convert(CancellationToken token)
         {
-            LogService?.Write(Resources.LogConvertStart, LogLevels.Debug);
-            if (!(ADCDataReader is Int32DataFromPortReader))
-                ADCDataReader = new Int32DataFromPortReader();
-            var task = ADCDataReader.Read(Port, token);
-            task.Start();
-            SendMessage(Commands.Convert, 0);
-            task.Wait();
+            lock (portLocker)
+            {
+                LogService?.Write(Resources.LogConvertStart, LogLevels.Debug);
+                if (!(ADCDataReader is Int32DataFromPortReader))
+                    ADCDataReader = new Int32DataFromPortReader();
+                var task = ADCDataReader.Read(Port, token);
+                task.Start();
+                SendMessage(Commands.Convert, 0);
+                task.Wait();
 
-            int res = (int)task.Result;
-            LogService?.Write(Resources.LogConvertFinish, LogLevels.Info);
-            return res;
+                int res = (int)task.Result;
+                LogService?.Write(Resources.LogConvertFinish, LogLevels.Info);
+                return res;
+            }
+
         }
+
         public void CalibrationInside()
         {
-            LogService?.Write(Resources.LogCalibrationInsideStart, LogLevels.Info);
-            SendMessage(Commands.CalibrationInside, 0);
-            LogService?.Write(Resources.LogCalibrationInsideFinish, LogLevels.Info);
+            lock(portLocker)
+            {
+                LogService?.Write(Resources.LogCalibrationInsideStart, LogLevels.Info);
+                SendMessage(Commands.CalibrationInside, 0);
+                LogService?.Write(Resources.LogCalibrationInsideFinish, LogLevels.Info);
+            }
         }
         public void CalibrationOutside()
         {
-            LogService?.Write(Resources.LogCalibrationOutsideStart, LogLevels.Info);
-            SendMessage(Commands.CalibrationOutside, 0);
-            LogService?.Write(Resources.LogCalibrationOutsideFinish, LogLevels.Info);
+            lock (portLocker)
+            {
+                LogService?.Write(Resources.LogCalibrationOutsideStart, LogLevels.Info);
+                SendMessage(Commands.CalibrationOutside, 0);
+                LogService?.Write(Resources.LogCalibrationOutsideFinish, LogLevels.Info);
+            }
         }
         public void CalibrationScale()
         {
-            LogService?.Write(Resources.LogCalibrationScaleStart, LogLevels.Info);
-            SendMessage(Commands.CalibrationScale, 0);
-            LogService?.Write(Resources.LogCalibrationScaleFinish, LogLevels.Info);
+            lock(portLocker)
+            {
+                LogService?.Write(Resources.LogCalibrationScaleStart, LogLevels.Info);
+                SendMessage(Commands.CalibrationScale, 0);
+                LogService?.Write(Resources.LogCalibrationScaleFinish, LogLevels.Info);
+            }
         }
-        public void StartMonochrome(ushort time, CancellationToken token)
+
+        /// <summary>
+        /// Запуск работ монохроматора на время
+        /// </summary>
+        /// <param name="time">Время для запуска</param>
+        /// <param name="token">Токен отмены</param>
+        public async Task StartByTimeMonochromeAsync(TimeOnly time, CancellationToken token)
+        {
+            await Task.Run(() => StartByTimeMonochrome(time, token));
+        }
+
+        /// <summary>
+        /// Запуск работ монохроматора на время
+        /// </summary>
+        /// <param name="time">Время для запуска</param>
+        /// <param name="token">Токен отмены</param>
+        public void StartByTimeMonochrome(TimeOnly time, CancellationToken token)
+        {
+            lock (portLocker)
+            {
+               
+                if (!(ADCDataReader is GraphdataFromPortReader))
+                    ADCDataReader = new GraphdataFromPortReader();
+
+                //Фабрика токенов для чтения графиков
+                using CancellationTokenSource source = new();
+
+                var task = ADCDataReader.Read(Port, source.Token);
+
+                //задача по времени
+                Task timeTask = Task.Delay(time.Millisecond, token);
+                //Запуск приёма данных
+                task.Start();
+                //Запуск монохроматора
+                SendMessage(Commands.StartOnlyMonochrome); ;
+                //Запуск таймера
+                timeTask.Start();
+                //Ждём таймер. Он закончится когда выйдет время или будет отмена
+                timeTask.Wait();
+
+                SendMessage(Commands.Cancel);
+                //Подаём сигнал на закрытие порта передачи
+                source.Cancel();
+                //Ждём закрытия
+                task.Wait();
+                LogService?.Write(Resources.LogStartMonochrome, LogLevels.Info);
+
+            }
+        }
+
+        /// <summary>
+        /// Перемотка назад по времени
+        /// </summary>
+        /// <param name="time">Время</param>
+        /// <param name="token">Токен отмены</param>
+        /// <exception cref="PortClosedException">Если порт закрыт</exception>
+        public async Task RewindByTimeMonochromeAsync(TimeOnly time, CancellationToken token)
+        {
+            await Task.Run(() => RewindByTimeMonochrome(time, token));
+        }
+
+        /// <summary>
+        /// Перемотка назад по времени
+        /// </summary>
+        /// <param name="time">Время</param>
+        /// <param name="token">Токен отмены</param>
+        /// <exception cref="PortClosedException">Если порт закрыт</exception>
+        public void RewindByTimeMonochrome(TimeOnly time, CancellationToken token)
         {
             if (!Port.IsOpen)
             {
                 LogService?.Write(Resources.LogErrorOpenPort, LogLevels.Error);
                 throw new PortClosedException();
             }
-            if (!(ADCDataReader is GraphdataFromPortReader))
-                ADCDataReader = new GraphdataFromPortReader();
-            SendMessage(Commands.StartOnlyMonochrome, time); ;
-            //for (int i = 0; i < time; i++)
-            //{
-            //    Thread.Sleep(1);
-            //    if (token.IsCancellationRequested)
-            //        break;
-            //}
-            LogService?.Write(Resources.LogStartMonochrome, LogLevels.Info);
-        }
-        public void RewindMonochrome(ushort time)
-        {
-            SendMessage(Commands.RewindMonochrome, time);
+            lock (portLocker)
+            {
+
+                if (!(ADCDataReader is GraphdataFromPortReader))
+                    ADCDataReader = new GraphdataFromPortReader();
+
+                //Фабрика токенов для чтения графиков
+                using CancellationTokenSource source = new();
+
+                var task = ADCDataReader.Read(Port, source.Token);
+
+                //задача по времени
+                Task timeTask = Task.Delay(time.Millisecond, token);
+                //Запуск приёма данных
+                task.Start();
+                //Дать команду на ковертацию АЦП
+                SendMessage(Commands.RewindMonochrome);
+                //Запуск таймера
+                timeTask.Start();
+                //Ждём таймер. Он закончится когда выйдет время или будет отмена
+                timeTask.Wait();
+
+                SendMessage(Commands.Cancel);
+                //Подаём сигнал на закрытие порта передачи
+                source.Cancel();
+                //Ждём закрытия
+                task.Wait();
+                LogService?.Write(Resources.LogStartMonochrome, LogLevels.Info);
+
+            }
         }
 
         #endregion //Commands
-        private void SendMessage(Commands command, uint dates)
+
+        /// <summary>
+        /// Отправляет сообщение микроконтроллеру
+        /// </summary>
+        /// <param name="command">Команда</param>
+        /// <param name="dates">Параметры команды</param>
+        /// <exception cref="PortClosedException">Если порт закрыт</exception>
+        private void SendMessage(Commands command, ushort dates = 0)
         {
             if (!Port.IsOpen)
             {
@@ -385,8 +597,9 @@ namespace ADC_Control_Library
                 throw new PortClosedException();
             }
             uint com = (uint)command;
-            dates <<= 16;
-            dates |= com;
+            uint res = System.Convert.ToUInt32(dates);
+            res <<= 16;
+            res |= com;
             LogService?.Write(string.Format(Resources.LogSendMessageStart, dates.ToString()), LogLevels.Trace);
             if (!Port.IsOpen)
             {
@@ -394,21 +607,16 @@ namespace ADC_Control_Library
                 throw new PortClosedException();
             }
 
-            byte[] buffer = BitConverter.GetBytes(dates);
+            byte[] buffer = BitConverter.GetBytes(res);
             Port.Write(buffer, 0, 4);
             LogService?.Write(string.Format(Resources.LogSendMessageSuccessfully, dates.ToString()), LogLevels.Trace);
         }
 
-        private async Task<List<Point>> ConvertGraphAsync(CancellationToken token)
-        {
-            if (!(ADCDataReader is GraphdataFromPortReader))
-                ADCDataReader = new GraphdataFromPortReader();
-            List<Point> res = new();
-            var task = ADCDataReader.Read(Port, token);
-            await task;
-            return (List<Point>)task.Result;
-        }
-        private IEnumerable<(ADCProperty, int)> ReadPropertiesFromADC()
+        /// <summary>
+        /// Функция чтения свйоств АЦП. Запускать в паралельной задаче перед отправкой команды
+        /// </summary>
+        /// <returns>Свойства АЦП</returns>
+        private IEnumerable<(ADCProperty, int)> ReadByteAsPropertiesADCByPort()
         {
             var props = Enum.GetValues(typeof(ADCProperty));
             List<(ADCProperty, int)> ADCprops = new();
@@ -432,6 +640,7 @@ namespace ADC_Control_Library
         }
 
         private IDataFromPortReaderable? ADCDataReader { get; set; }
+        private object portLocker = new();
 
         private void OnPropertyChanged([CallerMemberName] string name = "") => PropertyChanged?.Invoke(this, new(name));
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -467,11 +676,11 @@ namespace ADC_Control_Library
                     try
                     {
                         int bufSize = port.Read(bytes, 0, 4);
-                        for (int i = size; i < size+bufSize; i++)
+                        for (int i = size; i < size + bufSize; i++)
                         {
                             val[i] = bytes[i - size];
                         }
-                        size+= bufSize;
+                        size += bufSize;
                         if (size == 4)
                             break;
                     }

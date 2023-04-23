@@ -101,8 +101,8 @@ int8_t CanTranspData = 1;
 int32_t summ;
 int8_t count;
 
-int8_t CAN_CONVERTATION = 0x00;
 uint32_t time_convert = 0;
+uint32_t timeout = 0;
 uint8_t rx_buffer[4];
 uint8_t props_buffer[30];
 /* USER CODE END PD */
@@ -643,7 +643,7 @@ void ADC_Convert()
 	HAL_TIM_Base_Start_IT(&htim2);
 	ADC_Start_By_Pin();
 	int i = 0;
-		while(CAN_CONVERTATION)
+		while(time_convert < timeout)
 		{
 			if(!HAL_GPIO_ReadPin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_DRDY))
 			{
@@ -674,39 +674,44 @@ void RunMonochrome()
 	time_convert = 0;
 	START_MONOCHROME();
 	HAL_TIM_Base_Start_IT(&htim2);
-	while(CAN_CONVERTATION)
-	{
-		
-	}
+}
+
+void StopMonochromeAndSaveTimeout()
+{
 	STOP_MONOCHROME();
 	HAL_TIM_Base_Stop_IT(&htim2);
+	timeout = time_convert;
 }
 void RunMonochromeByTimeConvert()
 {
 	TIM2->CNT = 0;
-	uint32_t old_time = time_convert;
 	time_convert = 0;
 	START_MONOCHROME();
 	HAL_TIM_Base_Start_IT(&htim2);
-	while(time_convert < old_time && CAN_CONVERTATION)
+	while(time_convert < timeout)
 	{
 		
 	}
 	STOP_MONOCHROME();
 	HAL_TIM_Base_Stop_IT(&htim2);
-	time_convert = 0;
 }
 
-
-void REWIND()
+void Rewind()
 {
 	TIM2->CNT = 0;
-	uint32_t old_time = time_convert;
+	time_convert = 0;
+	REWIND_MONOCHROME();
+	HAL_TIM_Base_Start_IT(&htim2);
+}
+
+void RewindByTime()
+{
+	TIM2->CNT = 0;
 	time_convert = 0;
 	
 	START_MONOCHROME();
 	HAL_TIM_Base_Start_IT(&htim2);
-	while(old_time < time_convert && CAN_CONVERTATION)
+	while(time_convert < timeout)
 	{
 		
 	}
@@ -1205,9 +1210,7 @@ void SetADCPropertySwitch(uint8_t index, int8_t value)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	CAN_CONVERTATION = 0x01;
 	Convert_Input_Data(rx_buffer);
-	CAN_CONVERTATION = 0x00;
 	HAL_UART_Receive_IT(&huart1, rx_buffer, 4);
 }
 
@@ -1291,22 +1294,27 @@ void Convert_Input_Data(uint8_t* data)
 		}
 		case 11:
 		{
-			CAN_CONVERTATION = 0x00;
+			RunMonochrome();
 			break;
 		}
 		case 12:
 		{
-			REWIND();
+			Rewind();
 			break;
 		}
 		case 13:
 		{
-			RunMonochrome();
+			StopMonochromeAndSaveTimeout();
 			break;
 		}
 		case 14:
 		{
-			
+			RunMonochromeByTimeConvert();
+			break;
+		}
+		case 15:
+		{
+			RewindByTime();
 			break;
 		}
 	}

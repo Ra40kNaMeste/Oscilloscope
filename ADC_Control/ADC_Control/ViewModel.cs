@@ -56,7 +56,7 @@ namespace ADC_Control
             ADC.PropertyChanged += (sender, e) => UpdatePortCommand();
             ADC.PropertyChanged += CallPropertyChangedByGraphs;
             PropertyChanged += (sender, e) => UpdatePortCommand();
-
+            IsRunningOperation = false;
         }
 
         private void FillUpdatedCommands()
@@ -221,13 +221,13 @@ namespace ADC_Control
         /// <summary>
         /// Считать свойства с АЦП модуля
         /// </summary>
-        public UniversalCommand UpdateADCPropertiesCommand => updateADCPropertiesCommand ??= new(UpdateADCProperties, CanInvokeADCOperation);
+        public UniversalCommand UpdateADCPropertiesCommand => updateADCPropertiesCommand ??= new(UpdateADCPropertiesAsync, CanInvokeADCOperation);
 
         private UniversalCommand? writeADCPropertiesCommand;
         /// <summary>
         /// Записать свойства на АЦП модуль
         /// </summary>
-        public UniversalCommand WriteADCPropertiesCommand => writeADCPropertiesCommand ??= new(WriteADCProperties, CanInvokeADCOperation);
+        public UniversalCommand WriteADCPropertiesCommand => writeADCPropertiesCommand ??= new(WriteADCPropertiesAsync, CanInvokeADCOperation);
 
 
         private UniversalCommand? testMirrorCommand;
@@ -236,15 +236,20 @@ namespace ADC_Control
         /// Проверить связь с микроконтроллером
         /// </summary>
         public UniversalCommand TestMirrorCommand => testMirrorCommand ??= new(TestMirrorAsync,
-            (obj) => SelectPort != null && !ADC.Port.IsOpen);
+            (obj) => SelectPort != null && ADC.Port.IsOpen);
 
         private UniversalCommand? cancelADCOpertaionCommand;
 
+        [CommandCanExecudeUpdateByPropertyChanged]
         /// <summary>
         /// Отменить выполняемую операцию
         /// </summary>
         public UniversalCommand CancelADCOpertaionCommand => cancelADCOpertaionCommand ??= new(
-            (obj) => { tokenSource.Cancel(); IsRunningOperation = false; },
+            (obj) => 
+            { 
+                tokenSource.Cancel();
+                IsRunningOperation = false; 
+            },
             (obj) => IsRunningOperation);
 
         private UniversalCommand? calibrationADCInsideCommand;
@@ -273,22 +278,22 @@ namespace ADC_Control
         /// <summary>
         /// Конвертирует 1 значение сигнала
         /// </summary>
-        public UniversalCommand ConvertADCCommand => convertADCCommand ??= new(ConvertValueADC, CanInvokeADCOperation);
+        public UniversalCommand ConvertADCCommand => convertADCCommand ??= new(ConvertValueADCAsync, CanInvokeADCOperation);
 
         private UniversalCommand? convertADCToTimeCommand;
         [CommandCanExecudeUpdateByPropertyChanged]
         /// <summary>
         /// Конвертирует по времени в график
         /// </summary>
-        public UniversalCommand ConvertADCToTimeCommand => convertADCToTimeCommand ??= new(ConvertADCToTime, CanInvokeADCOperation);
+        public UniversalCommand ConvertADCToTimeCommand => convertADCToTimeCommand ??= new(ConvertADCToTimeAsync, CanInvokeADCOperation);
 
         private UniversalCommand? runMonochromeCommand;
         [CommandCanExecudeUpdateByPropertyChanged]
-        public UniversalCommand RunMonochromeCommand => runMonochromeCommand ??= new(RunMonochrome, CanInvokeADCOperation);
+        public UniversalCommand RunMonochromeCommand => runMonochromeCommand ??= new(RunMonochromeAsync, CanInvokeADCOperation);
 
         private UniversalCommand? rewindMonochromeCommand;
         [CommandCanExecudeUpdateByPropertyChanged]
-        public UniversalCommand RewindMonochromeCommand => rewindMonochromeCommand ??= new(RewindMonochrome, CanInvokeADCOperation);
+        public UniversalCommand RewindMonochromeCommand => rewindMonochromeCommand ??= new(RewindMonochromeAsync, CanInvokeADCOperation);
 
         #endregion //Head
 
@@ -313,7 +318,7 @@ namespace ADC_Control
                 UpdatePortCommand();
                 IsMirrorTest = await ADC.RunTestMirrorAsync(new TimeSpan(0, 1, 30), GetToken());
                 if (IsMirrorTest == true)
-                    UpdateADCProperties(null);
+                    UpdateADCPropertiesAsync(null);
                 Logger.Info(string.Format(Resources.LogClosePortFinish, SelectPort));
                 IsRunningOperation = false;
             }
@@ -327,6 +332,9 @@ namespace ADC_Control
         private async void TestMirrorAsync(object? parameter)
         {
             await ADC.RunTestMirrorAsync(new(0, 0, 10), GetToken());
+            //Сброс токенов
+            if (tokenSource.IsCancellationRequested)
+                tokenSource.TryReset();
         }
 
         private bool CanClosePort(object? parameter) => SelectPort != null && ADC.Port.IsOpen;
@@ -349,25 +357,33 @@ namespace ADC_Control
 
         private bool CanInvokeADCOperation(object? parameter)
         {
-            return ADC.Port.IsOpen && IsMirrorTest == true;
+            return ADC.Port.IsOpen && IsMirrorTest == true && !IsRunningOperation;
         }
 
-        private async void ConvertValueADC(object? parameter)
+        private async void ConvertValueADCAsync(object? parameter)
         {
             try
             {
                 Logger.Info(Resources.LogStartConvertValue);
+                IsRunningOperation = true;
                 var res = await ADC.ConvertAsync(GetToken());
                 MessageBox.Show(res.ToString());
+                //Сброс токенов
+                if (tokenSource.IsCancellationRequested)
+                    tokenSource.TryReset();
                 Logger.Info(Resources.LogFinishCoonvertValue);
             }
             catch (Exception)
             {
 
             }
+            finally
+            {
+                IsRunningOperation = false;
+            }
         }
 
-        private async void ConvertADCToTime(object? parameter)
+        private async void ConvertADCToTimeAsync(object? parameter)
         {
 
             if (short.TryParse(TimeConvertation, out short time))
@@ -375,10 +391,12 @@ namespace ADC_Control
                 try
                 {
                     Logger.Info(Resources.LogStartConvertGraph);
-
+                    IsRunningOperation = true;
                     var result = await ADC.ConvertToTimeAsync(new(0, 0, 0, time), GetToken());
                     Logger.Info(Resources.LogEndConvertGraph);
-                    IsRunningOperation = false;
+                    //Сброс токенов
+                    if (tokenSource.IsCancellationRequested)
+                        tokenSource.TryReset();
 
                 }
                 catch (Exception)
@@ -386,45 +404,53 @@ namespace ADC_Control
 
                     Logger.Info(Resources.LogErrorConvertGraph);
                 }
+                finally
+                {
+                    IsRunningOperation = false;
+                }
             }
         }
 
-        private async void RunMonochrome(object? parameter)
+        private async void RunMonochromeAsync(object? parameter)
         {
             if (ushort.TryParse(TimeConvertation, out ushort time))
             {
                 try
                 {
                     Logger.Info(Resources.LogRunMonochromeStart);
-                    var elements = AutomationElement.RootElement.FindAll(TreeScope.Children, System.Windows.Automation.Condition.TrueCondition);
-                    AutomationElement? element = null;
-                    foreach (AutomationElement item in elements)
-                    {
-                        if (item.Current.Name.Contains("SignalExpress"))
-                        {
-                            element = item;
-                            break;
-                        }
+                    //var elements = AutomationElement.RootElement.FindAll(TreeScope.Children, System.Windows.Automation.Condition.TrueCondition);
+                    //AutomationElement? element = null;
+                    //foreach (AutomationElement item in elements)
+                    //{
+                    //    if (item.Current.Name.Contains("SignalExpress"))
+                    //    {
+                    //        element = item;
+                    //        break;
+                    //    }
 
-                    }
-                    if (element == null) { throw new Exception(); }
-                    var commandBar = element.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "DockTop"));
-                    element.SetFocus();
-                    Point pnt = commandBar.Current.BoundingRectangle.Location;
-                    uint x = (uint)pnt.X + 140;
-                    uint y = (uint)pnt.Y + 30;
-                    SetCursorPos((int)x, (int)y);
-                    mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
-                    mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
-                    x -= 20;
-                    y += 80;
-                    SetCursorPos((int)x, (int)y);
-                    mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
-                    mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+                    //}
+                    //if (element == null) { throw new Exception(); }
+                    //var commandBar = element.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "DockTop"));
+                    //element.SetFocus();
+                    //Point pnt = commandBar.Current.BoundingRectangle.Location;
+                    //uint x = (uint)pnt.X + 140;
+                    //uint y = (uint)pnt.Y + 30;
+                    //SetCursorPos((int)x, (int)y);
+                    //mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
+                    //mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+                    //x -= 20;
+                    //y += 80;
+                    //SetCursorPos((int)x, (int)y);
+                    //mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
+                    //mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
 
-
-                    await ADC.StartByTimeMonochromeAsync(new(0, 0, 0, time), GetToken());
+                    IsRunningOperation = true;
+                    await ADC.StartByTimeMonochromeAsync(TimeOnly.FromTimeSpan(TimeSpan.FromMilliseconds(time)), GetToken());
                     Logger.Info(Resources.LogRunMonochromeFinish);
+                    //Сброс токенов
+                    if (tokenSource.IsCancellationRequested)
+                        tokenSource.TryReset();
+
                 }
                 catch (Exception)
                 {
@@ -437,14 +463,19 @@ namespace ADC_Control
             }
         }
 
-        private async void RewindMonochrome(object? parameter)
+        private async void RewindMonochromeAsync(object? parameter)
         {
             if (ushort.TryParse(TimeConvertation, out ushort time))
             {
                 try
                 {
                     Logger.Info(Resources.LogRewindMonochromeStart);
-                    await ADC.RewindByTimeMonochromeAsync(new(0, 0, 0, time), GetToken());
+                    IsRunningOperation = true;
+                    await ADC.RewindByTimeMonochromeAsync(TimeOnly.FromTimeSpan(TimeSpan.FromMilliseconds(time)), GetToken());
+                    //Сброс токенов
+                    if (tokenSource.IsCancellationRequested)
+                        tokenSource.TryReset();
+
                     Logger.Info(Resources.LogRewindMonochromeFinish);
                 }
                 catch (Exception)
@@ -456,19 +487,51 @@ namespace ADC_Control
                 }
             }
         }
-        public async void UpdateADCProperties(object? parameter)
+        public async void UpdateADCPropertiesAsync(object? parameter)
         {
-            Logger.Info(Resources.LogReadADCPropertiesStart);
-            await ADC.UpdateFromADCPropertiesAsync();
-            Logger.Info(Resources.LogReadADCPropertiesFinish);
-            OnADCPropertiesChanged();
+            try
+            {
+                Logger.Info(Resources.LogReadADCPropertiesStart);
+                IsRunningOperation = true;
+                await ADC.UpdateFromADCPropertiesAsync();
+                //Сброс токенов
+                if (tokenSource.IsCancellationRequested)
+                    tokenSource.TryReset();
+
+                Logger.Info(Resources.LogReadADCPropertiesFinish);
+                OnADCPropertiesChanged();
+            }
+            catch (Exception)
+            {
+
+            }
+            finally
+            {
+                IsRunningOperation = false;
+            }
         }
 
-        public async void WriteADCProperties(object? parameter)
+        public async void WriteADCPropertiesAsync(object? parameter)
         {
-            Logger.Info(Resources.LogWriteADCPropertiesStart);
-            await ADC.WriteToADCPropertiesAsync();
-            Logger.Info(Resources.LogWriteADCPropertiesFinish);
+            try
+            {
+                Logger.Info(Resources.LogWriteADCPropertiesStart);
+                IsRunningOperation = true;
+                await ADC.WriteToADCPropertiesAsync();
+                //Сброс токенов
+                if (tokenSource.IsCancellationRequested)
+                    tokenSource.TryReset();
+
+                Logger.Info(Resources.LogWriteADCPropertiesFinish);
+            }
+            catch (Exception)
+            {
+
+            }
+            finally
+            {
+                IsRunningOperation = false;
+            }
         }
 
         #endregion //Body
@@ -502,7 +565,14 @@ namespace ADC_Control
 
         private void CallPropertyChangedByGraphs(object? sender, PropertyChangedEventArgs e)
         {
-            OnPropertyChanged("Graphs");
+            switch (e.PropertyName)
+            {
+                case "Ports":
+                    OnPropertyChanged("Ports");
+                    break;
+                default:
+                    break;
+            }
         }
 
         private List<UniversalCommand> UpdatedCommands { get; init; }

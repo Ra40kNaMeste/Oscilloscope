@@ -157,9 +157,9 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>1308</LineNumber>
+          <LineNumber>1219</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134223524</Address>
+          <Address>134219944</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -168,28 +168,44 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>D:\СѓС‡С‘Р±Р°\РџСЂРѕРµРєС‚С‹\РџСЂР°РєС‚РёРєР° РґРёРїР»РѕРј Р±Р°РєР°Р»Р°РІСЂР°\Р”РёРїР»РѕРј\Р Р°Р·СЂР°Р±РѕС‚РєР° РїР»Р°С‚С‹\STM32Develop\Core\Src\main.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\STM32Develop\../Core/Src/main.c\1308</Expression>
+          <Expression>\\STM32Develop\../Core/Src/main.c\1219</Expression>
         </Bp>
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
-          <LineNumber>1273</LineNumber>
+          <LineNumber>677</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>0</Address>
+          <Address>134228046</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>0</BreakIfRCount>
-          <Filename>../Core/Src/main.c</Filename>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>D:\СѓС‡С‘Р±Р°\РџСЂРѕРµРєС‚С‹\РџСЂР°РєС‚РёРєР° РґРёРїР»РѕРј Р±Р°РєР°Р»Р°РІСЂР°\Р”РёРїР»РѕРј\Р Р°Р·СЂР°Р±РѕС‚РєР° РїР»Р°С‚С‹\STM32Develop\Core\Src\main.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression></Expression>
+          <Expression>\\STM32Develop\../Core/Src/main.c\677</Expression>
         </Bp>
         <Bp>
           <Number>2</Number>
           <Type>0</Type>
-          <LineNumber>1346</LineNumber>
+          <LineNumber>682</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134228078</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>D:\СѓС‡С‘Р±Р°\РџСЂРѕРµРєС‚С‹\РџСЂР°РєС‚РёРєР° РґРёРїР»РѕРј Р±Р°РєР°Р»Р°РІСЂР°\Р”РёРїР»РѕРј\Р Р°Р·СЂР°Р±РѕС‚РєР° РїР»Р°С‚С‹\STM32Develop\Core\Src\main.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\STM32Develop\../Core/Src/main.c\682</Expression>
+        </Bp>
+        <Bp>
+          <Number>3</Number>
+          <Type>0</Type>
+          <LineNumber>1306</LineNumber>
           <EnabledFlag>1</EnabledFlag>
           <Address>0</Address>
           <ByteObject>0</ByteObject>

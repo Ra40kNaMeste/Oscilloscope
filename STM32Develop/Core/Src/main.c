@@ -635,7 +635,6 @@ int8_t ADC_READ_Bytes_By_Mask_From_Register(uint8_t adress, uint8_t offset, uint
 void ADC_Convert()
 {
 	ADC_APPEND_Byte_To_Register(ADC_REGISTER_MODE0, 0x40, 0);
-	
 	TIM2->CNT = 0;
 	summ = 0;
 	count = 0;
@@ -644,7 +643,7 @@ void ADC_Convert()
 	HAL_TIM_Base_Start_IT(&htim2);
 	ADC_Start_By_Pin();
 	int i = 0;
-		while(!CAN_CONVERTATION)
+		while(CAN_CONVERTATION)
 		{
 			if(!HAL_GPIO_ReadPin(ADC_CONTROL_GPIO, ADC_CONTROL_PIN_DRDY))
 			{
@@ -671,12 +670,11 @@ void ADC_Convert()
 
 void RunMonochrome()
 {
-	
 	TIM2->CNT = 0;
 	time_convert = 0;
 	START_MONOCHROME();
 	HAL_TIM_Base_Start_IT(&htim2);
-	while(!CAN_CONVERTATION)
+	while(CAN_CONVERTATION)
 	{
 		
 	}
@@ -690,7 +688,7 @@ void RunMonochromeByTimeConvert()
 	time_convert = 0;
 	START_MONOCHROME();
 	HAL_TIM_Base_Start_IT(&htim2);
-	while(time_convert < old_time && !CAN_CONVERTATION)
+	while(time_convert < old_time && CAN_CONVERTATION)
 	{
 		
 	}
@@ -708,7 +706,7 @@ void REWIND()
 	
 	START_MONOCHROME();
 	HAL_TIM_Base_Start_IT(&htim2);
-	while(old_time < time_convert && !CAN_CONVERTATION)
+	while(old_time < time_convert && CAN_CONVERTATION)
 	{
 		
 	}
@@ -1293,7 +1291,7 @@ void Convert_Input_Data(uint8_t* data)
 		}
 		case 11:
 		{
-			CAN_CONVERTATION = 0x01;
+			CAN_CONVERTATION = 0x00;
 			break;
 		}
 		case 12:

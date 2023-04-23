@@ -146,7 +146,7 @@ namespace ADC_Control_Library
 
         public object ConvertCodeToValue(byte code)
         {
-            throw new NotImplementedException();
+            return code;
         }
 
         public byte ConvertValueToCode(object value)

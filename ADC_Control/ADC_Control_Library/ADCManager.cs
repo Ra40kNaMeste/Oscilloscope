@@ -193,6 +193,9 @@ namespace ADC_Control_Library
                 {1.5, 24 },
                 {0.5, 25 }
             }));
+            ADCProperties.Add(new PropertiesTableByteElement(ADCProperty.GPIOSelect, ADCPropertyMode.ReadAndWrite));
+            ADCProperties.Add(new PropertiesTableByteElement(ADCProperty.GRIOMode, ADCPropertyMode.ReadAndWrite));
+            ADCProperties.Add(new PropertiesTableByteElement(ADCProperty.GpioData, ADCPropertyMode.ReadAndWrite));
 
         }
         #endregion //ADCProperties
@@ -436,12 +439,20 @@ namespace ADC_Control_Library
                 LogService?.Write(Resources.LogConvertStart, LogLevels.Debug);
                 if (!(ADCDataReader is Int32DataFromPortReader))
                     ADCDataReader = new Int32DataFromPortReader();
-                var task = ADCDataReader.Read(Port, token);
-                task.Start();
-                SendMessage(Commands.Convert, 0);
-                task.Wait();
+                int res = 0;
+                try
+                {
+                    var task = ADCDataReader.Read(Port, token);
+                    task.Start();
+                    SendMessage(Commands.Convert, 0);
+                    task.Wait();
+                    res = (int)task.Result;
+                }
+                catch (Exception)
+                {
 
-                int res = (int)task.Result;
+                }
+
                 LogService?.Write(Resources.LogConvertFinish, LogLevels.Info);
                 return res;
             }
@@ -504,16 +515,18 @@ namespace ADC_Control_Library
 
                 var task = ADCDataReader.Read(Port, source.Token);
 
-                //задача по времени
-                Task timeTask = Task.Delay(time.Millisecond, token);
                 //Запуск приёма данных
                 task.Start();
                 //Запуск монохроматора
-                SendMessage(Commands.StartOnlyMonochrome); ;
+                SendMessage(Commands.StartOnlyMonochrome);
                 //Запуск таймера
-                timeTask.Start();
-                //Ждём таймер. Он закончится когда выйдет время или будет отмена
-                timeTask.Wait();
+                try
+                {
+                    Task.Delay(time.ToMillisecond(), token).Wait();
+                }
+                catch (Exception)
+                {
+                }
 
                 SendMessage(Commands.Cancel);
                 //Подаём сигнал на закрытие порта передачи
@@ -560,17 +573,18 @@ namespace ADC_Control_Library
 
                 var task = ADCDataReader.Read(Port, source.Token);
 
-                //задача по времени
-                Task timeTask = Task.Delay(time.Millisecond, token);
                 //Запуск приёма данных
                 task.Start();
                 //Дать команду на ковертацию АЦП
                 SendMessage(Commands.RewindMonochrome);
                 //Запуск таймера
-                timeTask.Start();
-                //Ждём таймер. Он закончится когда выйдет время или будет отмена
-                timeTask.Wait();
-
+                try
+                {
+                    Task.Delay(time.ToMillisecond(), token).Wait();
+                }
+                catch (Exception)
+                {
+                }
                 SendMessage(Commands.Cancel);
                 //Подаём сигнал на закрытие порта передачи
                 source.Cancel();
@@ -700,7 +714,7 @@ namespace ADC_Control_Library
             return new Task<object>(() =>
             {
                 List<Point> res = new();
-                while (token.IsCancellationRequested)
+                while (!token.IsCancellationRequested)
                 {
                     res.Add(ReadCeil(port, token));
                 }
@@ -719,6 +733,13 @@ namespace ADC_Control_Library
             yTask.Start();
             yTask.Wait();
             return new((int)xTask.Result, (int)yTask.Result);
+        }
+    }
+    public static class TimeOnlyExtension
+    {
+        public static int ToMillisecond(this TimeOnly time)
+        {
+            return (int)(time.Ticks / TimeSpan.TicksPerMillisecond);
         }
     }
 }

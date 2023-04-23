@@ -124,7 +124,7 @@
                     <Button Content="{x:Static res:Resources.RunMonochromeButtonContent}" Command="{Binding RunMonochromeCommand}"/>
                     <Button Content="{x:Static res:Resources.RewindMonochromeButtonContent}" Command="{Binding RewindMonochromeCommand}"/>
 
-                    <Button Content="{x:Static res:Resources.CancelADCOperationButtonContent}" Command="{Binding CancelADCOperationCommand}"/>
+                    <Button Content="{x:Static res:Resources.CancelADCOperationButtonContent}" Command="{Binding CancelADCOpertaionCommand}"/>
 
                     <Line X1="0" Y1="0" X2="1" Y2="0" Stretch="Fill" Style="{DynamicResource delimiterLineStyle}"/>
 

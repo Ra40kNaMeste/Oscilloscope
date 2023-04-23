@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+#MDK-ARM files
+STM32Develop.uvguix.*
+
 # User-specific files
 *.rsuser
 *.suo

@@ -1,15 +1,8 @@
 ﻿using ADC_Control_Library.Properties;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using System.IO;
 using System.IO.Ports;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ADC_Control_Library
 {
@@ -27,10 +20,11 @@ namespace ADC_Control_Library
         ReadAllPropertiesADC = 8,
         ReadPropertyAdc = 9,
         SetProperty = 10,
-        Cancel = 11,
+        StopMonochrome = 13,
         RewindMonochrome = 12,
-        StartOnlyMonochrome = 13,
-        RewindToTimeMonochrome = 14
+        StartOnlyMonochrome = 11,
+        StartToTimeMonochrome = 14,
+        RewindToTimeMonochrome = 15
     }
     public sealed class ADCManager : INotifyPropertyChanged, IDisposable
     {
@@ -341,7 +335,6 @@ namespace ADC_Control_Library
                 //Ждём таймер. Он закончится когда выйдет время или будет отмена
                 timeTask.Wait();
                 //Подаём команду на отмену конвертации
-                SendMessage(Commands.Cancel);
                 //Подаём сигнал на закрытие порта передачи
                 source.Cancel();
                 //Ждём закрытия
@@ -422,7 +415,7 @@ namespace ADC_Control_Library
         /// <returns>Значение</returns>
         public async Task<int> ConvertAsync(CancellationToken token)
         {
-            var task = new Task<int>(()=> Convert(token));
+            var task = new Task<int>(() => Convert(token));
             await task;
             return task.Result;
         }
@@ -461,7 +454,7 @@ namespace ADC_Control_Library
 
         public void CalibrationInside()
         {
-            lock(portLocker)
+            lock (portLocker)
             {
                 LogService?.Write(Resources.LogCalibrationInsideStart, LogLevels.Info);
                 SendMessage(Commands.CalibrationInside, 0);
@@ -479,7 +472,7 @@ namespace ADC_Control_Library
         }
         public void CalibrationScale()
         {
-            lock(portLocker)
+            lock (portLocker)
             {
                 LogService?.Write(Resources.LogCalibrationScaleStart, LogLevels.Info);
                 SendMessage(Commands.CalibrationScale, 0);
@@ -506,7 +499,7 @@ namespace ADC_Control_Library
         {
             lock (portLocker)
             {
-               
+
                 if (!(ADCDataReader is GraphdataFromPortReader))
                     ADCDataReader = new GraphdataFromPortReader();
 
@@ -528,7 +521,7 @@ namespace ADC_Control_Library
                 {
                 }
 
-                SendMessage(Commands.Cancel);
+                SendMessage(Commands.StopMonochrome);
                 //Подаём сигнал на закрытие порта передачи
                 source.Cancel();
                 //Ждём закрытия
@@ -585,7 +578,7 @@ namespace ADC_Control_Library
                 catch (Exception)
                 {
                 }
-                SendMessage(Commands.Cancel);
+                SendMessage(Commands.StopMonochrome);
                 //Подаём сигнал на закрытие порта передачи
                 source.Cancel();
                 //Ждём закрытия

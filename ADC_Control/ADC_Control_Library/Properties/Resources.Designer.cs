@@ -241,6 +241,15 @@ namespace ADC_Control_Library.Properties {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Rewind monochrome.
+        /// </summary>
+        internal static string LogRewindMonochrome {
+            get {
+                return ResourceManager.GetString("LogRewindMonochrome", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Send message: port not open.
         /// </summary>
         internal static string LogSendMessageNotOpenPort {
@@ -268,7 +277,7 @@ namespace ADC_Control_Library.Properties {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Start monochrome successfully.
+        ///   Ищет локализованную строку, похожую на Start monochrome.
         /// </summary>
         internal static string LogStartMonochrome {
             get {
@@ -277,11 +286,29 @@ namespace ADC_Control_Library.Properties {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на .
+        ///   Ищет локализованную строку, похожую на Start read data port.
         /// </summary>
         internal static string LogStartReadDataPort {
             get {
                 return ResourceManager.GetString("LogStartReadDataPort", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Start timer in adc.
+        /// </summary>
+        internal static string LogStartTimerADC {
+            get {
+                return ResourceManager.GetString("LogStartTimerADC", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Stop monochrome.
+        /// </summary>
+        internal static string LogStopMonochrome {
+            get {
+                return ResourceManager.GetString("LogStopMonochrome", resourceCulture);
             }
         }
         

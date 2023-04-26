@@ -217,7 +217,7 @@
     <value>Биты данных</value>
   </data>
   <data name="PortParity" xml:space="preserve">
-    <value>Парити</value>
+    <value>Паритет</value>
   </data>
   <data name="PortStopBitsLabel" xml:space="preserve">
     <value>Стоп бит</value>

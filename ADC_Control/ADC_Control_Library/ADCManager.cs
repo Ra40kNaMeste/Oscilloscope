@@ -20,20 +20,20 @@ namespace ADC_Control_Library
         ReadAllPropertiesADC = 8,
         ReadPropertyAdc = 9,
         SetProperty = 10,
-        StopMonochrome = 13,
-        RewindMonochrome = 12,
         StartOnlyMonochrome = 11,
-        StartToTimeMonochrome = 14,
-        RewindToTimeMonochrome = 15
+        RewindMonochrome = 12,
+        StartTimer = 13,
+        StopMonochromeAndTimer = 14,
+        StartToTimeMonochrome = 15,
+        RewindToTimeMonochrome = 16
     }
-    public sealed class ADCManager : INotifyPropertyChanged, IDisposable
+    public sealed class ADCManager : INotifyPropertyChanged
     {
         public ADCManager()
         {
             Port = new();
             Port.ReadTimeout = 500;
             Port.WriteTimeout = 500;
-            TokenSource = new();
             ADCProperties = new();
             SetProperties();
             UpdatePorts();
@@ -497,38 +497,9 @@ namespace ADC_Control_Library
         /// <param name="token">Токен отмены</param>
         public void StartByTimeMonochrome(TimeOnly time, CancellationToken token)
         {
-            lock (portLocker)
-            {
-
-                if (!(ADCDataReader is GraphdataFromPortReader))
-                    ADCDataReader = new GraphdataFromPortReader();
-
-                //Фабрика токенов для чтения графиков
-                using CancellationTokenSource source = new();
-
-                var task = ADCDataReader.Read(Port, source.Token);
-
-                //Запуск приёма данных
-                task.Start();
-                //Запуск монохроматора
-                SendMessage(Commands.StartOnlyMonochrome);
-                //Запуск таймера
-                try
-                {
-                    Task.Delay(time.ToMillisecond(), token).Wait();
-                }
-                catch (Exception)
-                {
-                }
-
-                SendMessage(Commands.StopMonochrome);
-                //Подаём сигнал на закрытие порта передачи
-                source.Cancel();
-                //Ждём закрытия
-                task.Wait();
-                LogService?.Write(Resources.LogStartMonochrome, LogLevels.Info);
-
-            }
+            LogService?.Write(Resources.LogStartMonochrome, LogLevels.Info);
+            OnSendCommandTimer(time, token, Commands.StartOnlyMonochrome);
+            LogService?.Write(Resources.LogStopMonochrome, LogLevels.Info);
         }
 
         /// <summary>
@@ -550,42 +521,31 @@ namespace ADC_Control_Library
         /// <exception cref="PortClosedException">Если порт закрыт</exception>
         public void RewindByTimeMonochrome(TimeOnly time, CancellationToken token)
         {
-            if (!Port.IsOpen)
-            {
-                LogService?.Write(Resources.LogErrorOpenPort, LogLevels.Error);
-                throw new PortClosedException();
-            }
-            lock (portLocker)
-            {
+            LogService?.Write(Resources.LogRewindMonochrome, LogLevels.Info);
+            OnSendCommandTimer(time, token, Commands.RewindMonochrome);
+            LogService?.Write(Resources.LogStopMonochrome, LogLevels.Info);
+        }
 
-                if (!(ADCDataReader is GraphdataFromPortReader))
-                    ADCDataReader = new GraphdataFromPortReader();
+        /// <summary>
+        /// Задание времени на микропроцессор
+        /// </summary>
+        /// <param name="time">Время</param>
+        /// <param name="token">Токе отмены</param>
+        public async Task StartTimerByADCAsync(TimeOnly time, CancellationToken token)
+        {
+            await Task.Run(() => StartTimerByADC(time, token));
+        }
 
-                //Фабрика токенов для чтения графиков
-                using CancellationTokenSource source = new();
-
-                var task = ADCDataReader.Read(Port, source.Token);
-
-                //Запуск приёма данных
-                task.Start();
-                //Дать команду на ковертацию АЦП
-                SendMessage(Commands.RewindMonochrome);
-                //Запуск таймера
-                try
-                {
-                    Task.Delay(time.ToMillisecond(), token).Wait();
-                }
-                catch (Exception)
-                {
-                }
-                SendMessage(Commands.StopMonochrome);
-                //Подаём сигнал на закрытие порта передачи
-                source.Cancel();
-                //Ждём закрытия
-                task.Wait();
-                LogService?.Write(Resources.LogStartMonochrome, LogLevels.Info);
-
-            }
+        /// <summary>
+        /// Задание времени на микропроцессор
+        /// </summary>
+        /// <param name="time">Время</param>
+        /// <param name="token">Токе отмены</param>
+        public void StartTimerByADC(TimeOnly time, CancellationToken token)
+        {
+            LogService?.Write(Resources.LogStartTimerADC, LogLevels.Info);
+            OnSendCommandTimer(time, token, Commands.StartTimer);
+            LogService?.Write(Resources.LogStopMonochrome, LogLevels.Info);
         }
 
         #endregion //Commands
@@ -635,17 +595,34 @@ namespace ADC_Control_Library
             LogService?.Write(Resources.LogReadFinishPropertiesFromADC, LogLevels.Debug);
             return ADCprops;
         }
-
-        private CancellationTokenSource TokenSource { get; init; }
+        private void OnSendCommandTimer(TimeOnly time, CancellationToken token, Commands startCommand)
+        {
+            if (!Port.IsOpen)
+            {
+                LogService?.Write(Resources.LogErrorOpenPort, LogLevels.Error);
+                throw new PortClosedException();
+            }
+            lock (portLocker)
+            {
+                //Дать команду на ковертацию АЦП
+                SendMessage(startCommand);
+                timeByADC = time;
+                //Запуск таймера
+                try
+                {
+                    Task.Delay(time.ToMillisecond(), token).Wait();
+                }
+                catch (Exception)
+                {
+                    timeByADC = null;
+                }
+                SendMessage(Commands.StopMonochromeAndTimer);
+            }
+        }
 
         private ILogService? LogService { get; init; }
 
-        public void Dispose()
-        {
-            TokenSource.Cancel();
-            TokenSource.Dispose();
-        }
-
+        private TimeOnly? timeByADC { get; set; }
         private IDataFromPortReaderable? ADCDataReader { get; set; }
         private object portLocker = new();
 

@@ -582,20 +582,6 @@ namespace ADC_Control
             {
                 command.OnCanExecuteChanged();
             }
-            //UpdatePortParametersCommand.OnCanExecuteChanged();
-            //OpenPortCommand.OnCanExecuteChanged();
-            //ClosePortCommand.OnCanExecuteChanged();
-            //UpdatePortParametersCommand.OnCanExecuteChanged();
-
-            //TestMirrorCommand.OnCanExecuteChanged();
-            //CalibrationADCInsideCommand.OnCanExecuteChanged();
-            //CalibrationADCOutsideCommand.OnCanExecuteChanged();
-            //CalibrationADCScaleCommand.OnCanExecuteChanged();
-
-            //ConvertADCCommand.OnCanExecuteChanged();
-            //ConvertADCToTimeCommand.OnCanExecuteChanged();
-            //RunMonochromeCommand.OnCanExecuteChanged();
-            //RewindMonochromeCommand.OnCanExecuteChanged();
         }
 
         #endregion //PrivateMethods
@@ -604,7 +590,6 @@ namespace ADC_Control
         public void Dispose()
         {
             tokenSource.Dispose();
-            ADC.Dispose();
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

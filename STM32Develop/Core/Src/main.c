@@ -675,6 +675,12 @@ void RunMonochrome()
 	START_MONOCHROME();
 	HAL_TIM_Base_Start_IT(&htim2);
 }
+void StartTimer()
+{
+	TIM2->CNT = 0;
+	time_convert = 0;
+	HAL_TIM_Base_Start_IT(&htim2);
+}
 
 void StopMonochromeAndSaveTimeout()
 {
@@ -682,6 +688,7 @@ void StopMonochromeAndSaveTimeout()
 	HAL_TIM_Base_Stop_IT(&htim2);
 	timeout = time_convert;
 }
+
 void RunMonochromeByTimeConvert()
 {
 	TIM2->CNT = 0;
@@ -1304,15 +1311,20 @@ void Convert_Input_Data(uint8_t* data)
 		}
 		case 13:
 		{
-			StopMonochromeAndSaveTimeout();
+			StartTimer();
 			break;
 		}
 		case 14:
 		{
-			RunMonochromeByTimeConvert();
+			StopMonochromeAndSaveTimeout();
 			break;
 		}
 		case 15:
+		{
+			RunMonochromeByTimeConvert();
+			break;
+		}
+		case 16:
 		{
 			RewindByTime();
 			break;

@@ -177,6 +177,12 @@
   <data name="LogResetStart" xml:space="preserve">
     <value>Start reset</value>
   </data>
+  <data name="LogRewindByADCTimeMonochrome" xml:space="preserve">
+    <value>Rewind monochrome by ADC timer</value>
+  </data>
+  <data name="LogRewindMonochrome" xml:space="preserve">
+    <value>Rewind monochrome</value>
+  </data>
   <data name="LogSendMessageNotOpenPort" xml:space="preserve">
     <value>Send message: port not open</value>
   </data>
@@ -186,11 +192,20 @@
   <data name="LogSendMessageSuccessfully" xml:space="preserve">
     <value>Send message {0} continued</value>
   </data>
+  <data name="LogStartByADCTimeMonochrome" xml:space="preserve">
+    <value>Start monochrome by ADC timer</value>
+  </data>
   <data name="LogStartMonochrome" xml:space="preserve">
-    <value>Start monochrome successfully</value>
+    <value>Start monochrome</value>
   </data>
   <data name="LogStartReadDataPort" xml:space="preserve">
-    <value />
+    <value>Start read data port</value>
+  </data>
+  <data name="LogStartTimerADC" xml:space="preserve">
+    <value>Start timer in adc</value>
+  </data>
+  <data name="LogStopMonochrome" xml:space="preserve">
+    <value>Stop monochrome</value>
   </data>
   <data name="LogTestMirrorFailedTestByTimeout" xml:space="preserve">
     <value>Mirror test failed: timeout</value>

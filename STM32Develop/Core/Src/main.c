@@ -1317,6 +1317,7 @@ void Convert_Input_Data(uint8_t* data)
 		case 14:
 		{
 			StopMonochromeAndSaveTimeout();
+			HAL_UART_Transmit_IT(&huart1, &time_convert, 4);
 			break;
 		}
 		case 15:
@@ -1327,6 +1328,11 @@ void Convert_Input_Data(uint8_t* data)
 		case 16:
 		{
 			RewindByTime();
+			break;
+		}
+		case 17:
+		{
+			HAL_UART_Transmit_IT(&huart1, &time_convert, 4);
 			break;
 		}
 	}

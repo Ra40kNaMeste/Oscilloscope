@@ -241,6 +241,15 @@ namespace ADC_Control_Library.Properties {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Rewind monochrome by ADC timer.
+        /// </summary>
+        internal static string LogRewindByADCTimeMonochrome {
+            get {
+                return ResourceManager.GetString("LogRewindByADCTimeMonochrome", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Rewind monochrome.
         /// </summary>
         internal static string LogRewindMonochrome {
@@ -273,6 +282,15 @@ namespace ADC_Control_Library.Properties {
         internal static string LogSendMessageSuccessfully {
             get {
                 return ResourceManager.GetString("LogSendMessageSuccessfully", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Start monochrome by ADC timer.
+        /// </summary>
+        internal static string LogStartByADCTimeMonochrome {
+            get {
+                return ResourceManager.GetString("LogStartByADCTimeMonochrome", resourceCulture);
             }
         }
         

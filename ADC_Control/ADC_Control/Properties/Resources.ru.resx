@@ -153,60 +153,6 @@
   <data name="GraphsLabelContent" xml:space="preserve">
     <value>Графики</value>
   </data>
-  <data name="LogClosePortFinish" xml:space="preserve">
-    <value>Closed port</value>
-  </data>
-  <data name="LogClosePortStart" xml:space="preserve">
-    <value>Start close port {0} </value>
-  </data>
-  <data name="LogEndConvertGraph" xml:space="preserve">
-    <value>Measured successfully</value>
-  </data>
-  <data name="LogErrorConvertGraph" xml:space="preserve">
-    <value>Error measure</value>
-  </data>
-  <data name="LogFinishCoonvertValue" xml:space="preserve">
-    <value>value convert successfully</value>
-  </data>
-  <data name="LogOpenPortError" xml:space="preserve">
-    <value>Not successfully open port {0}</value>
-  </data>
-  <data name="LogOpenPortFinish" xml:space="preserve">
-    <value>Open port {0}</value>
-  </data>
-  <data name="LogOpenPortStart" xml:space="preserve">
-    <value>Open port started</value>
-  </data>
-  <data name="LogReadADCPropertiesFinish" xml:space="preserve">
-    <value>Readed porperties from ADC</value>
-  </data>
-  <data name="LogReadADCPropertiesStart" xml:space="preserve">
-    <value>Start read propertties from ADC</value>
-  </data>
-  <data name="LogRewindMonochromeFinish" xml:space="preserve">
-    <value>Rewinded successfully</value>
-  </data>
-  <data name="LogRewindMonochromeStart" xml:space="preserve">
-    <value>Rewind start</value>
-  </data>
-  <data name="LogRunMonochromeFinish" xml:space="preserve">
-    <value>Run monochrome successfully</value>
-  </data>
-  <data name="LogRunMonochromeStart" xml:space="preserve">
-    <value>Run monochrome</value>
-  </data>
-  <data name="LogStartConvertGraph" xml:space="preserve">
-    <value>Start measure by ADC</value>
-  </data>
-  <data name="LogStartConvertValue" xml:space="preserve">
-    <value>Start convert value</value>
-  </data>
-  <data name="LogWriteADCPropertiesFinish" xml:space="preserve">
-    <value>Writed proprerties to ADC</value>
-  </data>
-  <data name="LogWriteADCPropertiesStart" xml:space="preserve">
-    <value>Start write read properties to ADC</value>
-  </data>
   <data name="OpenPortButtonContent" xml:space="preserve">
     <value>Открыть порт</value>
   </data>
@@ -225,8 +171,14 @@
   <data name="RewindMonochromeButtonContent" xml:space="preserve">
     <value>Перемотка назад</value>
   </data>
+  <data name="RewindMonochromeByInsideTimerButtonContent" xml:space="preserve">
+    <value>Перемотать монохроматор по таймеру</value>
+  </data>
   <data name="RunMonochromeButtonContent" xml:space="preserve">
     <value>Запустить монохроматор</value>
+  </data>
+  <data name="RunMonochromeByInsideTimerButtonContent" xml:space="preserve">
+    <value>Запустить монохроматор по таймеру</value>
   </data>
   <data name="TestMirrorCommandButtonContent" xml:space="preserve">
     <value>Тест зеркала АЦП</value>

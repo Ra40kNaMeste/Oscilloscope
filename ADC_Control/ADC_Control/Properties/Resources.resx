@@ -168,6 +168,12 @@
   <data name="LogFinishCoonvertValue" xml:space="preserve">
     <value />
   </data>
+  <data name="LogFinishRewindByADCTimerMonochrome" xml:space="preserve">
+    <value>Finish rewind monochrome by inside timer</value>
+  </data>
+  <data name="LogFinishRunByADCTimerMonochrome" xml:space="preserve">
+    <value>Finish run monochrome by inside timer</value>
+  </data>
   <data name="LogOpenPortError" xml:space="preserve">
     <value>Not successfully open port {0}</value>
   </data>
@@ -201,6 +207,12 @@
   <data name="LogStartConvertValue" xml:space="preserve">
     <value>Start convert value</value>
   </data>
+  <data name="LogStartRewindByADCTimerMonochrome" xml:space="preserve">
+    <value>Start rewind monochrome by inside timer</value>
+  </data>
+  <data name="LogStartRunByADCTimerMonochrome" xml:space="preserve">
+    <value>Start run monochrome by inside timer</value>
+  </data>
   <data name="LogWriteADCPropertiesFinish" xml:space="preserve">
     <value>Writed proprerties to ADC</value>
   </data>
@@ -225,8 +237,14 @@
   <data name="RewindMonochromeButtonContent" xml:space="preserve">
     <value>Rewind</value>
   </data>
+  <data name="RewindMonochromeByInsideTimerButtonContent" xml:space="preserve">
+    <value>Rewind monochrome by inside timer</value>
+  </data>
   <data name="RunMonochromeButtonContent" xml:space="preserve">
     <value>Run only monochromator</value>
+  </data>
+  <data name="RunMonochromeByInsideTimerButtonContent" xml:space="preserve">
+    <value>Run monochrome by inside timer</value>
   </data>
   <data name="TestMirrorCommandButtonContent" xml:space="preserve">
     <value>Test mirror ADC</value>

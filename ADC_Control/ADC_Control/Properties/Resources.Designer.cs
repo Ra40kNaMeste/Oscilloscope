@@ -214,6 +214,24 @@ namespace ADC_Control.Properties {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Finish rewind monochrome by inside timer.
+        /// </summary>
+        public static string LogFinishRewindByADCTimerMonochrome {
+            get {
+                return ResourceManager.GetString("LogFinishRewindByADCTimerMonochrome", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Finish run monochrome by inside timer.
+        /// </summary>
+        public static string LogFinishRunByADCTimerMonochrome {
+            get {
+                return ResourceManager.GetString("LogFinishRunByADCTimerMonochrome", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Not successfully open port {0}.
         /// </summary>
         public static string LogOpenPortError {
@@ -313,6 +331,24 @@ namespace ADC_Control.Properties {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Start rewind monochrome by inside timer.
+        /// </summary>
+        public static string LogStartRewindByADCTimerMonochrome {
+            get {
+                return ResourceManager.GetString("LogStartRewindByADCTimerMonochrome", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Start run monochrome by inside timer.
+        /// </summary>
+        public static string LogStartRunByADCTimerMonochrome {
+            get {
+                return ResourceManager.GetString("LogStartRunByADCTimerMonochrome", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Writed proprerties to ADC.
         /// </summary>
         public static string LogWriteADCPropertiesFinish {
@@ -385,11 +421,29 @@ namespace ADC_Control.Properties {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Rewind monochrome by inside timer.
+        /// </summary>
+        public static string RewindMonochromeByInsideTimerButtonContent {
+            get {
+                return ResourceManager.GetString("RewindMonochromeByInsideTimerButtonContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Run only monochromator.
         /// </summary>
         public static string RunMonochromeButtonContent {
             get {
                 return ResourceManager.GetString("RunMonochromeButtonContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Run monochrome by inside timer.
+        /// </summary>
+        public static string RunMonochromeByInsideTimerButtonContent {
+            get {
+                return ResourceManager.GetString("RunMonochromeByInsideTimerButtonContent", resourceCulture);
             }
         }
         

@@ -3,6 +3,8 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO.Ports;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ADC_Control_Library
 {
@@ -25,10 +27,16 @@ namespace ADC_Control_Library
         StartTimer = 13,
         StopMonochromeAndTimer = 14,
         StartToTimeMonochrome = 15,
-        RewindToTimeMonochrome = 16
+        RewindToTimeMonochrome = 16,
+        GetTicksTimer = 17
     }
     public sealed class ADCManager : INotifyPropertyChanged
     {
+        static ADCManager()
+        {
+            TimeoutCommand = new(0, 0, 1);
+        }
+
         public ADCManager()
         {
             Port = new();
@@ -43,6 +51,11 @@ namespace ADC_Control_Library
         {
             LogService = logger;
         }
+
+        /// <summary>
+        /// Таймаут выполнения некоторых комманд
+        /// </summary>
+        public static TimeOnly TimeoutCommand { get; set; }
 
         #region ADCProperties
         public List<IPropertiesTableElementable> ADCProperties { get; init; }
@@ -217,47 +230,44 @@ namespace ADC_Control_Library
         {
             Ports = SerialPort.GetPortNames().ToList();
         }
+
         /// <summary>
         /// Тест на ответ порта
         /// </summary>
         /// <param name="value"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public bool RunTestMirror(TimeSpan timeout, CancellationToken token)
+        public async Task<bool> RunTestMirrorAsync(CancellationToken token)
+        {
+            bool res = false;
+            await Task.Run(() => { res = RunTestMirror(token); });
+            return res;
+        }
+
+        /// <summary>
+        /// Тест на ответ порта
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public bool RunTestMirror(CancellationToken token)
         {
             Random rand = new();
             ushort value = (ushort)rand.Next();
-            lock (portLocker)
+            LogService?.Write(string.Format(Resources.LogTestMirrorSend, value), LogLevels.Info);
+            try
             {
-                LogService?.Write(string.Format(Resources.LogTestMirrorSend, value), LogLevels.Info);
-                if (!(ADCDataReader is Int32DataFromPortReader))
-                    ADCDataReader = new Int32DataFromPortReader();
-                var task = ADCDataReader.Read(Port, token);
-                task.Start();
-                SendMessage(Commands.TestMirror, value);
-                try
-                {
-                    task.WaitAsync(timeout);
-                    task.Wait();
-                }
-                catch (TimeoutException)
-                {
-                    LogService?.Write(Resources.LogTestMirrorFailedTestByTimeout, LogLevels.Info);
-                    return false;
-                }
-                int res = (int)task.Result >> 16;
+                int res = ReadIntByADCCommand(Commands.TestMirror, token, TimeoutCommand, value) >> 16;
                 LogService?.Write(string.Format(Resources.LogTestMirrorReceived, res), LogLevels.Info);
                 return res == value;
             }
-
+            catch (TimeoutException)
+            {
+                LogService?.Write(Resources.LogTestMirrorFailedTestByTimeout, LogLevels.Error);
+                return false;
+            }
         }
 
-        public async Task<bool> RunTestMirrorAsync(TimeSpan timeout, CancellationToken token)
-        {
-            bool res = false;
-            await Task.Run(() => { res = RunTestMirror(timeout, token); });
-            return res;
-        }
 
         public void Reset()
         {
@@ -268,80 +278,6 @@ namespace ADC_Control_Library
                 LogService?.Write(Resources.LogResetFinish, LogLevels.Info);
             }
 
-        }
-
-        /// <summary>
-        /// Конвертация массива значений в течении некоторого времени
-        /// </summary>
-        /// <param name="time">Время конвертации</param>
-        /// <param name="token">Токен отмены</param>
-        /// <returns>Массив значений</returns>
-        public async Task<List<Point>> ConvertToTimeAsync(TimeOnly time, CancellationToken token)
-        {
-            Task<List<Point>> task = new(() => ConvertToTime(time, token));
-            await task;
-            return task.Result;
-        }
-
-        /// <summary>
-        /// Конвертация массива значений в течении некоторого времени
-        /// </summary>
-        /// <param name="time">Время конвертации</param>
-        /// <returns>Массив значений</returns>
-        public async Task<List<Point>> ConvertToTimeAsync(TimeOnly time)
-        {
-            Task<List<Point>> task = new(() => ConvertToTime(time));
-            await task;
-            return task.Result;
-        }
-
-        /// <summary>
-        /// Конвертация массива значений в течении некоторого времени
-        /// </summary>
-        /// <param name="time">Время конвертции</param>
-        /// <returns>Массив значений</returns>
-        public List<Point> ConvertToTime(TimeOnly time)
-        {
-            using CancellationTokenSource source = new();
-            return ConvertToTime(time, source.Token);
-        }
-        /// <summary>
-        /// Конвертация массива значений в течении некоторого времени
-        /// </summary>
-        /// <param name="time">Время конвертации</param>
-        /// <param name="token">Токен отвемы</param>
-        /// <returns>Сконвертированный график</returns>
-        private List<Point> ConvertToTime(TimeOnly time, CancellationToken token)
-        {
-            lock (portLocker)
-            {
-                if (!(ADCDataReader is GraphdataFromPortReader))
-                    ADCDataReader = new GraphdataFromPortReader();
-
-                //Фабрика токенов для чтения графиков
-                using CancellationTokenSource source = new();
-
-                //задача снятия графика
-                var task = ADCDataReader.Read(Port, source.Token);
-
-                //задача по времени
-                Task timeTask = Task.Delay(time.Millisecond, token);
-                //Запуск приёма данных
-                task.Start();
-                //Дать команду на ковертацию АЦП
-                SendMessage(Commands.ConvertToTime);
-                //Запуск таймера
-                timeTask.Start();
-                //Ждём таймер. Он закончится когда выйдет время или будет отмена
-                timeTask.Wait();
-                //Подаём команду на отмену конвертации
-                //Подаём сигнал на закрытие порта передачи
-                source.Cancel();
-                //Ждём закрытия
-                task.Wait();
-                LogService?.Write(Resources.LogConvertFinish, LogLevels.Info);
-                return (List<Point>)task.Result;
-            }
         }
 
         /// <summary>
@@ -548,7 +484,116 @@ namespace ADC_Control_Library
             LogService?.Write(Resources.LogStopMonochrome, LogLevels.Info);
         }
 
+        /// <summary>
+        /// Конвертация массива значений в течении некоторого времени
+        /// </summary>
+        /// <param name="time">Время конвертации</param>
+        /// <returns>Массив значений</returns>
+        public async Task<List<Point>> ConvertToTimeAsync()
+        {
+            Task<List<Point>> task = new(() => ConvertToTime());
+            await task;
+            return task.Result;
+        }
+
+        /// <summary>
+        /// Конвертация массива значений в течении некоторого времени
+        /// </summary>
+        /// <param name="time">Время конвертации</param>
+        /// <param name="token">Токен отвемы</param>
+        /// <returns>Сконвертированный график</returns>
+        public List<Point> ConvertToTime()
+        {
+            
+            lock (portLocker)
+            {
+                LogService?.Write(Resources.LogConvertStart, LogLevels.Info);
+                //Фабрика токенов для чтения графиков
+                using CancellationTokenSource source = new();
+                if (!(ADCDataReader is GraphdataFromPortReader))
+                    ADCDataReader = new GraphdataFromPortReader();
+                //задача снятия графика
+                var task = ADCDataReader.Read(Port, source.Token);
+                //Запуск приёма данных
+                task.Start();
+                OnSendCommandADCTimer(Commands.ConvertToTime);
+                //Подаём команду на отмену конвертации
+                //Подаём сигнал на закрытие порта передачи
+                source.Cancel();
+                //Ждём закрытия
+                task.Wait();
+                LogService?.Write(Resources.LogConvertFinish, LogLevels.Info);
+                return (List<Point>)task.Result;
+            }
+        }
+
+        /// <summary>
+        /// Перемотка вперёд монохроматора по таймеру микроконтроллера
+        /// </summary>
+        public async Task StartByADCTimerMonochromeAsync()
+        {
+            await Task.Run(StartByADCTimerMonochrome);
+        }
+
+        /// <summary>
+        /// Перемотка вперёд монохроматора по таймеру микроконтроллера
+        /// </summary>
+        public void StartByADCTimerMonochrome()
+        {
+            LogService?.Write(Resources.LogStartByADCTimeMonochrome, LogLevels.Info);
+            try
+            {
+                OnSendCommandADCTimer(Commands.StartToTimeMonochrome);
+            }
+            catch (TimeoutException e)
+            {
+
+                throw e;
+            }
+            LogService?.Write(Resources.LogStopMonochrome, LogLevels.Info);
+        }
+
+        /// <summary>
+        /// Перемотка назад монохроматора по таймеру микроконтроллера
+        /// </summary>
+        public async Task RewindByADCTimerMonochromeAsunc()
+        {
+            await Task.Run(RewindByADCTimerMonochrome);
+        }
+
+        /// <summary>
+        /// Перемотка назад монохроматора по таймеру микроконтроллера
+        /// </summary>
+        public void RewindByADCTimerMonochrome()
+        {
+            LogService?.Write(Resources.LogRewindByADCTimeMonochrome, LogLevels.Info);
+            try
+            {
+                OnSendCommandADCTimer(Commands.StartToTimeMonochrome);
+            }
+            catch (TimeoutException e)
+            {
+
+                throw e;
+            }
+            LogService?.Write(Resources.LogStopMonochrome, LogLevels.Info);
+        }
+
         #endregion //Commands
+
+        #region VisualProperties
+
+        private TimeOnly? timeFromADC;
+        public TimeOnly? TimeFromADC 
+        {
+            get => timeFromADC;
+            private set
+            {
+                timeFromADC = value;
+                OnPropertyChanged();
+            }
+        }
+        #endregion //VisualProperties
 
         /// <summary>
         /// Отправляет сообщение микроконтроллеру
@@ -606,25 +651,102 @@ namespace ADC_Control_Library
             {
                 //Дать команду на ковертацию АЦП
                 SendMessage(startCommand);
-                timeByADC = time;
+                
                 //Запуск таймера
                 try
                 {
                     Task.Delay(time.ToMillisecond(), token).Wait();
+                    TimeFromADC = time;
                 }
                 catch (Exception)
                 {
-                    timeByADC = null;
                 }
+                //Читаем время в тиках на микропроцессоре
+                if (!(ADCDataReader is Int32DataFromPortReader))
+                    ADCDataReader = new Int32DataFromPortReader();
+                var task = ADCDataReader.Read(Port, token);
+                task.Start();
                 SendMessage(Commands.StopMonochromeAndTimer);
+                try
+                {
+                    task.WaitAsync(new TimeSpan(TimeoutCommand.Ticks));
+                    task.Wait();
+                }
+                catch (TimeoutException e)
+                {
+                    throw e;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Прочитывает int из микроконтроллера
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="token"></param>
+        /// <param name="timeout"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        /// <exception cref="TimeoutException"></exception>
+        private int ReadIntByADCCommand(Commands command, CancellationToken token, TimeOnly timeout, ushort value)
+        {
+            lock (portLocker)
+            {
+                if (!(ADCDataReader is Int32DataFromPortReader))
+                    ADCDataReader = new Int32DataFromPortReader();
+                var task = ADCDataReader.Read(Port, token);
+                task.Start();
+                SendMessage(Commands.TestMirror, value);
+                try
+                {
+                    task.WaitAsync(new TimeSpan(timeout.Ticks));
+                    task.Wait();
+                }
+                catch (TimeoutException e)
+                {
+                    throw e;
+                }
+
+                return (int)task.Result;
+            }
+        }
+
+        private void OnSendCommandADCTimer(Commands startCommand)
+        {
+            if (!Port.IsOpen)
+            {
+                LogService?.Write(Resources.LogErrorOpenPort, LogLevels.Error);
+                throw new PortClosedException();
+            }
+            lock (portLocker)
+            {
+                //Узнаём количество тиков
+                using CancellationTokenSource source = new();
+                int time = ReadIntByADCCommand(Commands.GetTicksTimer, source.Token, TimeoutCommand, 0);
+                if (time != ticksTimesADC)
+                    throw new TimeoutException();
+
+                //Дать команду на ковертацию АЦП
+                SendMessage(startCommand);
+
+                if (TimeFromADC == null)
+                    throw new ArgumentException("TimeFromADC");
+                //Запуск таймера
+                try
+                {
+                    Task.Delay(TimeFromADC?.ToMillisecond() ?? 0).Wait();
+                }
+                catch (Exception)
+                {
+                }
             }
         }
 
         private ILogService? LogService { get; init; }
 
-        private TimeOnly? timeByADC { get; set; }
         private IDataFromPortReaderable? ADCDataReader { get; set; }
         private object portLocker = new();
+        private int ticksTimesADC = 0;
 
         private void OnPropertyChanged([CallerMemberName] string name = "") => PropertyChanged?.Invoke(this, new(name));
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -671,7 +793,7 @@ namespace ADC_Control_Library
                     catch (TimeoutException) { }
                 }
 
-                return (int)BitConverter.ToInt32(val, 0);
+                return BitConverter.ToInt32(val, 0);
             });
 
         }

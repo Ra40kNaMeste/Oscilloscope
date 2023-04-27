@@ -19,7 +19,7 @@ using InteractiveDataDisplay.WPF;
 namespace ADC_Control
 {
     [AttributeUsage(AttributeTargets.Property)]
-    class CommandCanExecudeUpdateByPropertyChangedAttribute:Attribute
+    class CommandCanExecudeUpdateByPropertyChangedAttribute : Attribute
     {
 
     }
@@ -151,11 +151,11 @@ namespace ADC_Control
             }
         }
 
-        private string timeConvertation;
+        private DateTime? timeConvertation;
         /// <summary>
         /// Время для непрерывной конвертации
         /// </summary>
-        public string TimeConvertation
+        public DateTime? TimeConvertation
         {
             get => timeConvertation;
             set
@@ -245,10 +245,10 @@ namespace ADC_Control
         /// Отменить выполняемую операцию
         /// </summary>
         public UniversalCommand CancelADCOpertaionCommand => cancelADCOpertaionCommand ??= new(
-            (obj) => 
-            { 
+            (obj) =>
+            {
                 tokenSource.Cancel();
-                IsRunningOperation = false; 
+                IsRunningOperation = false;
             },
             (obj) => IsRunningOperation);
 
@@ -285,7 +285,7 @@ namespace ADC_Control
         /// <summary>
         /// Конвертирует по времени в график
         /// </summary>
-        public UniversalCommand ConvertADCToTimeCommand => convertADCToTimeCommand ??= new(ConvertADCToTimeAsync, CanInvokeADCOperation);
+        public UniversalCommand ConvertADCToTimeCommand => convertADCToTimeCommand ??= new(ConvertADCToTimeAsync, CanInvokeADCOperationWithInsideTimer);
 
         private UniversalCommand? runMonochromeCommand;
         [CommandCanExecudeUpdateByPropertyChanged]
@@ -294,6 +294,15 @@ namespace ADC_Control
         private UniversalCommand? rewindMonochromeCommand;
         [CommandCanExecudeUpdateByPropertyChanged]
         public UniversalCommand RewindMonochromeCommand => rewindMonochromeCommand ??= new(RewindMonochromeAsync, CanInvokeADCOperation);
+
+
+        private UniversalCommand? runByADCTimerMonochromeCommand;
+        [CommandCanExecudeUpdateByPropertyChanged]
+        public UniversalCommand RunByADCTimerMonochromeCommand => runByADCTimerMonochromeCommand ??= new(RunByADCTimerMonochromeAsync, CanInvokeADCOperationWithInsideTimer);
+
+        private UniversalCommand? rewindByADCTimerMonochromeCommand;
+        [CommandCanExecudeUpdateByPropertyChanged]
+        public UniversalCommand RewindByADCTimerMonochromeCommand => rewindByADCTimerMonochromeCommand ??= new(RewindByADCTimerMonochromeAsync, CanInvokeADCOperationWithInsideTimer);
 
         #endregion //Head
 
@@ -316,7 +325,7 @@ namespace ADC_Control
                 SettingPortVM.ResetChangedProperties();
                 ADC.Port.Open();
                 UpdatePortCommand();
-                IsMirrorTest = await ADC.RunTestMirrorAsync(new TimeSpan(0, 1, 30), GetToken());
+                IsMirrorTest = await ADC.RunTestMirrorAsync(GetToken());
                 if (IsMirrorTest == true)
                     UpdateADCPropertiesAsync(null);
                 Logger.Info(string.Format(Resources.LogClosePortFinish, SelectPort));
@@ -331,7 +340,7 @@ namespace ADC_Control
 
         private async void TestMirrorAsync(object? parameter)
         {
-            await ADC.RunTestMirrorAsync(new(0, 0, 10), GetToken());
+            await ADC.RunTestMirrorAsync(GetToken());
             //Сброс токенов
             if (tokenSource.IsCancellationRequested)
                 tokenSource.TryReset();
@@ -359,7 +368,11 @@ namespace ADC_Control
         {
             return ADC.Port.IsOpen && IsMirrorTest == true && !IsRunningOperation;
         }
-
+        private bool CanInvokeADCOperationWithInsideTimer(object? parameter)
+        {
+            return CanInvokeADCOperation(parameter) && ADC.TimeFromADC != null && TimeConvertation != null &&
+                new TimeOnly(TimeConvertation.Value.Ticks) == ADC.TimeFromADC;
+        }
         private async void ConvertValueADCAsync(object? parameter)
         {
             try
@@ -385,108 +398,142 @@ namespace ADC_Control
 
         private async void ConvertADCToTimeAsync(object? parameter)
         {
-
-            if (short.TryParse(TimeConvertation, out short time))
+            try
             {
-                try
-                {
-                    Logger.Info(Resources.LogStartConvertGraph);
-                    IsRunningOperation = true;
-                    var result = await ADC.ConvertToTimeAsync(new(0, 0, 0, time), GetToken());
-                    Logger.Info(Resources.LogEndConvertGraph);
-                    //Сброс токенов
-                    if (tokenSource.IsCancellationRequested)
-                        tokenSource.TryReset();
+                Logger.Info(Resources.LogStartConvertGraph);
+                IsRunningOperation = true;
+                var result = await ADC.ConvertToTimeAsync();
+                Logger.Info(Resources.LogEndConvertGraph);
+                //Сброс токенов
+                if (tokenSource.IsCancellationRequested)
+                    tokenSource.TryReset();
 
-                }
-                catch (Exception)
-                {
+            }
+            catch (Exception)
+            {
 
-                    Logger.Info(Resources.LogErrorConvertGraph);
-                }
-                finally
-                {
-                    IsRunningOperation = false;
-                }
+                Logger.Info(Resources.LogErrorConvertGraph);
+            }
+            finally
+            {
+                IsRunningOperation = false;
             }
         }
 
         private async void RunMonochromeAsync(object? parameter)
         {
-            if (ushort.TryParse(TimeConvertation, out ushort time))
+            try
             {
-                try
+                Logger.Info(Resources.LogRunMonochromeStart);
+                if (TimeConvertation == null)
                 {
-                    Logger.Info(Resources.LogRunMonochromeStart);
-                    //var elements = AutomationElement.RootElement.FindAll(TreeScope.Children, System.Windows.Automation.Condition.TrueCondition);
-                    //AutomationElement? element = null;
-                    //foreach (AutomationElement item in elements)
-                    //{
-                    //    if (item.Current.Name.Contains("SignalExpress"))
-                    //    {
-                    //        element = item;
-                    //        break;
-                    //    }
-
-                    //}
-                    //if (element == null) { throw new Exception(); }
-                    //var commandBar = element.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "DockTop"));
-                    //element.SetFocus();
-                    //Point pnt = commandBar.Current.BoundingRectangle.Location;
-                    //uint x = (uint)pnt.X + 140;
-                    //uint y = (uint)pnt.Y + 30;
-                    //SetCursorPos((int)x, (int)y);
-                    //mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
-                    //mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
-                    //x -= 20;
-                    //y += 80;
-                    //SetCursorPos((int)x, (int)y);
-                    //mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
-                    //mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
-
-                    IsRunningOperation = true;
-                    await ADC.StartByTimeMonochromeAsync(TimeOnly.FromTimeSpan(TimeSpan.FromMilliseconds(time)), GetToken());
-                    Logger.Info(Resources.LogRunMonochromeFinish);
-                    //Сброс токенов
-                    if (tokenSource.IsCancellationRequested)
-                        tokenSource.TryReset();
-
+                    return;
                 }
-                catch (Exception)
-                {
+                //var elements = AutomationElement.RootElement.FindAll(TreeScope.Children, System.Windows.Automation.Condition.TrueCondition);
+                //AutomationElement? element = null;
+                //foreach (AutomationElement item in elements)
+                //{
+                //    if (item.Current.Name.Contains("SignalExpress"))
+                //    {
+                //        element = item;
+                //        break;
+                //    }
 
-                }
-                finally
-                {
-                    IsRunningOperation = false;
-                }
+                //}
+                //if (element == null) { throw new Exception(); }
+                //var commandBar = element.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "DockTop"));
+                //element.SetFocus();
+                //Point pnt = commandBar.Current.BoundingRectangle.Location;
+                //uint x = (uint)pnt.X + 140;
+                //uint y = (uint)pnt.Y + 30;
+                //SetCursorPos((int)x, (int)y);
+                //mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
+                //mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+                //x -= 20;
+                //y += 80;
+                //SetCursorPos((int)x, (int)y);
+                //mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
+                //mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+
+                IsRunningOperation = true;
+                await ADC.StartByTimeMonochromeAsync(new TimeOnly(TimeConvertation.Value.Ticks), GetToken());
+                Logger.Info(Resources.LogRunMonochromeFinish);
+                //Сброс токенов
+                if (tokenSource.IsCancellationRequested)
+                    tokenSource.TryReset();
+
+            }
+            catch (Exception)
+            {
+
+            }
+            finally
+            {
+                IsRunningOperation = false;
             }
         }
 
         private async void RewindMonochromeAsync(object? parameter)
         {
-            if (ushort.TryParse(TimeConvertation, out ushort time))
-            {
-                try
-                {
-                    Logger.Info(Resources.LogRewindMonochromeStart);
-                    IsRunningOperation = true;
-                    await ADC.RewindByTimeMonochromeAsync(TimeOnly.FromTimeSpan(TimeSpan.FromMilliseconds(time)), GetToken());
-                    //Сброс токенов
-                    if (tokenSource.IsCancellationRequested)
-                        tokenSource.TryReset();
 
-                    Logger.Info(Resources.LogRewindMonochromeFinish);
-                }
-                catch (Exception)
-                {
-                }
-                finally
-                {
-                    IsRunningOperation = false;
-                }
+            try
+            {
+                Logger.Info(Resources.LogRewindMonochromeStart);
+                IsRunningOperation = true;
+                if (TimeConvertation != null)
+                    await ADC.RewindByTimeMonochromeAsync(new TimeOnly(TimeConvertation.Value.Ticks), GetToken());
+                //Сброс токенов
+                if (tokenSource.IsCancellationRequested)
+                    tokenSource.TryReset();
+
+                Logger.Info(Resources.LogRewindMonochromeFinish);
+            }
+            catch (Exception)
+            {
+            }
+            finally
+            {
+                IsRunningOperation = false;
             }
         }
+
+        private async void RunByADCTimerMonochromeAsync(object? parameter)
+        {
+            try
+            {
+                IsRunningOperation = true;
+                Logger.Info(Resources.LogStartRunByADCTimerMonochrome);
+                await ADC.StartByADCTimerMonochromeAsync();
+                Logger.Info(Resources.LogFinishRunByADCTimerMonochrome);
+            } 
+            catch (Exception)
+            {
+
+            }
+            finally
+            {
+                IsRunningOperation = false;
+            }
+        }
+        private async void RewindByADCTimerMonochromeAsync(object? parameter)
+        {
+            try
+            {
+                IsRunningOperation = true;
+                Logger.Info(Resources.LogStartRewindByADCTimerMonochrome);
+                await ADC.RewindByADCTimerMonochromeAsunc();
+                Logger.Info(Resources.LogFinishRewindByADCTimerMonochrome);
+            }
+            catch (Exception)
+            {
+
+            }
+            finally
+            {
+                IsRunningOperation = false;
+            }
+        }
+
         public async void UpdateADCPropertiesAsync(object? parameter)
         {
             try
